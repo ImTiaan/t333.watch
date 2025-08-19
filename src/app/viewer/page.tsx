@@ -816,33 +816,23 @@ function ViewerContent() {
             {streams.map((stream, index) => {
               const isPrimary = stream.isPrimary || false;
               
-              // Calculate the grid area based on whether this is the primary stream
-              // This ensures the primary stream is always in the primary position
-              // We need to use a different approach to ensure the primary stream is always in the primary position
-              let gridArea;
+              // Calculate grid area based on current primary/secondary ordering
+              let gridArea: string;
               if (isPrimary) {
                 gridArea = 'primary';
               } else {
-                // For secondary streams, we need to calculate the secondary index
-                // Count how many secondary streams come before this one
+                // Count how many secondary streams come before this one to determine its slot
                 let secondaryIndex = 0;
                 for (let i = 0; i < streams.length; i++) {
                   const s = streams[i];
-                  if (s.id === stream.id) {
-                    break;
-                  }
-                  if (!s.isPrimary) {
-                    secondaryIndex++;
-                  }
+                  if (s.id === stream.id) break;
+                  if (!s.isPrimary) secondaryIndex++;
                 }
                 gridArea = `secondary${secondaryIndex + 1}`;
               }
               
-              // Log the grid area assignment
-              console.log(`Stream ${stream.channel} (id: ${stream.id}): isPrimary=${isPrimary}, gridArea=${gridArea}, index=${index}`);
-              
-              // Add a key that includes the isPrimary status to force re-render when it changes
-              const streamKey = `${stream.id}-${isPrimary ? 'primary' : 'secondary'}`;
+              // Use a stable key so the DOM node (and Twitch player) is not recreated when isPrimary toggles
+              const streamKey = stream.id;
               
               return (
                 <div
