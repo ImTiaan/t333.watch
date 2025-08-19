@@ -18,6 +18,24 @@ export function generateMetadata(): Metadata {
     title: `${config.appName} | Multi-Stream Viewer for Twitch`,
     description: config.appDescription,
     keywords: "Twitch, multi-stream, stream viewer, roleplay, esports, IRL, collaborations",
+    icons: {
+      icon: [
+        { url: '/t3logo.png', type: 'image/png' },
+      ],
+      apple: [
+        { url: '/t3logo.png', type: 'image/png' },
+      ],
+    },
+    openGraph: {
+      images: [
+        {
+          url: '/t3logo.png',
+          width: 1200,
+          height: 630,
+          alt: 't333.watch - Multi-Stream Viewer for Twitch',
+        },
+      ],
+    },
   };
 }
 

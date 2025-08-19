@@ -1,12 +1,20 @@
 @import "tailwindcss";
 
 :root {
+  /* Twitch exact color palette */
   --background: #0e0e10;
   --foreground: #efeff1;
   --primary: #9146FF;
   --primary-hover: #772ce8;
   --secondary: #18181b;
   --border: #2d2d3a;
+  --tertiary: #1f1f23;
+  --error: #f43e37;
+  --success: #00c275;
+  --warning: #ffca61;
+  --info: #5c16c5;
+  --muted: #adadb8;
+  --highlight: #bf94ff;
 }
 
 @theme inline {
@@ -15,7 +23,14 @@
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
+  --color-tertiary: var(--tertiary);
   --color-border: var(--border);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-muted: var(--muted);
+  --color-highlight: var(--highlight);
   --font-sans: var(--font-inter);
 }
 
@@ -44,13 +59,153 @@ body {
   background: #555;
 }
 
+/* Twitch-like animations */
+@keyframes twitch-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes twitch-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes twitch-slide-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 /* Utility classes */
 .twitch-button {
-  @apply bg-[#9146FF] hover:bg-[#772ce8] text-white font-medium py-2 px-4 rounded transition-colors;
+  @apply bg-[#9146FF] hover:bg-[#772ce8] text-white font-medium py-2 px-4 rounded transition-all;
+  box-shadow: 0 0 0 0 rgba(145, 70, 255, 0);
+}
+
+/* Twitch-like error and success messages */
+.twitch-message {
+  @apply rounded-md p-4 mb-4 flex items-start;
+  animation: twitch-slide-in 0.3s ease-out;
+}
+
+.twitch-message-error {
+  @apply bg-[#f43e37]/10 border border-[#f43e37]/20 text-[#f43e37];
+}
+
+.twitch-message-success {
+  @apply bg-[#00c275]/10 border border-[#00c275]/20 text-[#00c275];
+}
+
+.twitch-message-warning {
+  @apply bg-[#ffca61]/10 border border-[#ffca61]/20 text-[#ffca61];
+}
+
+.twitch-message-info {
+  @apply bg-[#5c16c5]/10 border border-[#5c16c5]/20 text-[#5c16c5];
+}
+
+.twitch-message-icon {
+  @apply mr-3 flex-shrink-0 h-5 w-5;
+}
+
+.twitch-message-content {
+  @apply flex-1;
+}
+
+.twitch-message-title {
+  @apply text-sm font-medium mb-1;
+}
+
+.twitch-message-description {
+  @apply text-xs opacity-90;
+}
+
+/* Twitch-like form elements */
+.twitch-input {
+  @apply bg-[#18181b] border border-[#2d2d3a] rounded px-4 py-2 text-white w-full transition-all;
+}
+
+.twitch-input:focus {
+  @apply outline-none border-[#9146FF] ring-1 ring-[#9146FF];
+}
+
+.twitch-input::placeholder {
+  @apply text-gray-500;
+}
+
+.twitch-input:disabled {
+  @apply opacity-70 cursor-not-allowed;
+}
+
+.twitch-select {
+  @apply bg-[#18181b] border border-[#2d2d3a] rounded px-4 py-2 text-white appearance-none pr-8 transition-all;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239146FF' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+}
+
+.twitch-select:focus {
+  @apply outline-none border-[#9146FF] ring-1 ring-[#9146FF];
+}
+
+/* Twitch-like card */
+.twitch-card {
+  @apply bg-[#18181b] border border-[#2d2d3a] rounded-md overflow-hidden transition-all;
+}
+
+.twitch-card:hover {
+  @apply border-[#3d3d4a] transform translate-y-[-2px];
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.twitch-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(145, 70, 255, 0.2);
+}
+
+.twitch-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(145, 70, 255, 0.1);
 }
 
 .twitch-button-secondary {
-  @apply bg-[#3a3a3d] hover:bg-[#464649] text-white font-medium py-2 px-4 rounded transition-colors;
+  @apply bg-[#3a3a3d] hover:bg-[#464649] text-white font-medium py-2 px-4 rounded transition-all;
+}
+
+.twitch-button-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.twitch-button-secondary:active {
+  transform: translateY(0);
+}
+
+/* Twitch-like loading animation */
+.twitch-loading {
+  @apply relative inline-block w-6 h-6;
+}
+
+.twitch-loading:before {
+  content: '';
+  @apply absolute inset-0 rounded-full border-2 border-transparent border-t-[#9146FF] animate-spin;
+}
+
+/* Twitch-like tooltip */
+.twitch-tooltip {
+  @apply relative inline-block;
+}
+
+.twitch-tooltip-text {
+  @apply invisible absolute z-10 px-3 py-2 bg-[#18181b] text-white text-xs rounded opacity-0 transition-opacity whitespace-nowrap;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.twitch-tooltip:hover .twitch-tooltip-text {
+  @apply visible opacity-100;
 }
 
 /* Custom styles for the multi-stream viewer */

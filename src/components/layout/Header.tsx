@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 
@@ -14,11 +15,18 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-[#18181b] border-b border-[#2d2d3a] p-4">
+    <header className="bg-[#18181b] border-b border-[#2d2d3a] p-4 sticky top-0 z-50 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
-          <Link href="/" className="text-2xl font-bold text-white">
-            <span className="text-[#9146FF]">t333</span>.watch
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/t3logo.png"
+              alt="t333.watch"
+              width={150}
+              height={50}
+              className="h-12 w-auto"
+              priority
+            />
           </Link>
         </div>
         
@@ -28,53 +36,82 @@ export default function Header() {
           <div className="flex items-center gap-6">
             <nav>
               <ul className="flex gap-6">
-                <li>
-                  <Link 
-                    href="/dashboard" 
-                    className={`text-white hover:text-[#9146FF] transition-colors ${isActive('/dashboard') ? 'font-bold text-[#9146FF]' : ''}`}
+                {/* Dashboard Icon */}
+                <li className="relative group">
+                  <Link
+                    href="/dashboard"
+                    className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${isActive('/dashboard') ? 'bg-[#9146FF]/20 text-[#9146FF]' : 'text-white hover:bg-[#2d2d3a] hover:text-[#9146FF]'}`}
+                    aria-label="Dashboard"
                   >
-                    Dashboard
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                    </svg>
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-1 bg-[#18181b] text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Dashboard</span>
                   </Link>
                 </li>
-                <li>
-                  <Link 
-                    href="/viewer" 
-                    className={`text-white hover:text-[#9146FF] transition-colors ${isActive('/viewer') ? 'font-bold text-[#9146FF]' : ''}`}
+                
+                {/* Viewer Icon */}
+                <li className="relative group">
+                  <Link
+                    href="/viewer"
+                    className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${isActive('/viewer') ? 'bg-[#9146FF]/20 text-[#9146FF]' : 'text-white hover:bg-[#2d2d3a] hover:text-[#9146FF]'}`}
+                    aria-label="Stream Viewer"
                   >
-                    Viewer
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                    </svg>
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-1 bg-[#18181b] text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Stream Viewer</span>
                   </Link>
                 </li>
-                <li>
+                
+                {/* My Packs Icon */}
+                <li className="relative group">
                   <Link
                     href="/dashboard/packs"
-                    className={`text-white hover:text-[#9146FF] transition-colors ${isActive('/dashboard/packs') ? 'font-bold text-[#9146FF]' : ''}`}
+                    className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${isActive('/dashboard/packs') ? 'bg-[#9146FF]/20 text-[#9146FF]' : 'text-white hover:bg-[#2d2d3a] hover:text-[#9146FF]'}`}
+                    aria-label="My Packs"
                   >
-                    My Packs
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                    </svg>
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-1 bg-[#18181b] text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">My Packs</span>
                   </Link>
                 </li>
-                <li>
-                  <Link 
-                    href="/discover" 
-                    className={`text-white hover:text-[#9146FF] transition-colors ${isActive('/discover') ? 'font-bold text-[#9146FF]' : ''}`}
+                
+                {/* Discover Icon */}
+                <li className="relative group">
+                  <Link
+                    href="/discover"
+                    className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${isActive('/discover') ? 'bg-[#9146FF]/20 text-[#9146FF]' : 'text-white hover:bg-[#2d2d3a] hover:text-[#9146FF]'}`}
+                    aria-label="Discover"
                   >
-                    Discover
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                    </svg>
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-1 bg-[#18181b] text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Discover</span>
                   </Link>
                 </li>
-                <li>
+                
+                {/* Premium/Upgrade Icon */}
+                <li className="relative group">
                   <Link
                     href="/dashboard/subscription"
-                    className={`text-white hover:text-[#9146FF] transition-colors ${isActive('/dashboard/subscription') ? 'font-bold text-[#9146FF]' : ''}`}
+                    className={`flex items-center justify-center w-8 h-8 rounded-md transition-colors ${isActive('/dashboard/subscription') ? 'bg-[#9146FF]/20 text-[#9146FF]' : 'text-white hover:bg-[#2d2d3a] hover:text-[#9146FF]'}`}
+                    aria-label={user?.premium_flag ? "Premium Status" : "Upgrade to Premium"}
                   >
                     {user?.premium_flag ? (
-                      <span className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-[#9146FF]" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        Premium
-                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.707.293l.707.707L15.414 4a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-2-2A1 1 0 0110 6.414l1.293 1.293L14.586 4 13.414 2.879l-1.707-.707A1 1 0 0112 2z" clipRule="evenodd" />
+                      </svg>
                     ) : (
-                      'Upgrade'
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V5a1 1 0 10-1 1h1zm3 0a1 1 0 10-1-1v1h1z" clipRule="evenodd" />
+                        <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
+                      </svg>
                     )}
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-1 bg-[#18181b] text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      {user?.premium_flag ? "Premium" : "Upgrade"}
+                    </span>
                   </Link>
                 </li>
               </ul>

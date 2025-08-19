@@ -91,23 +91,17 @@ export default async function Image(req: NextRequest) {
               marginBottom: '20px',
             }}
           >
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-4l-4 4v-4H5a1 1 0 0 1-1-1V5z"
-                fill="#9146FF"
-                stroke="#9146FF"
-                strokeWidth="2"
-              />
-            </svg>
-            <span
+            {/* Using the t3logo.png image */}
+            <img
+              src={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/t3logo.png`}
+              width="180"
+              height="60"
+              alt="t333.watch"
               style={{
-                fontSize: '28px',
-                fontWeight: 'bold',
-                marginLeft: '10px',
+                height: '60px',
+                width: 'auto',
               }}
-            >
-              t333.watch
-            </span>
+            />
           </div>
           
           {/* Pack title */}
