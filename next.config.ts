@@ -10,8 +10,15 @@ const nextConfig: NextConfig = {
     // Disable TypeScript type checking during production builds
     ignoreBuildErrors: true,
   },
-  // Use server mode instead of standalone
-  output: undefined,
+  // Set to 'export' for static site generation
+  // This is compatible with Vercel deployments
+  output: 'export',
+  // Disable image optimization since we're using export
+  images: {
+    unoptimized: true
+  },
+  // Disable trailing slash
+  trailingSlash: false
 };
 
 export default nextConfig;
