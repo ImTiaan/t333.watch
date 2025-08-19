@@ -266,7 +266,7 @@ function ViewerContent() {
     
     // Don't clear existing embeds to preserve playback state
     // This is key to maintaining the user gesture token for Chrome's autoplay policy
-    // embedRefs.current = {};
+    // We need to keep the existing embeds to avoid the black screen issue
     
     // Load the Twitch embed script if not already loaded
     if (!document.getElementById('twitch-embed-script')) {
@@ -625,15 +625,14 @@ function ViewerContent() {
     const playingStreamIds = new Set(playingStreamsRef.current);
     console.log(`Currently playing streams: ${Array.from(playingStreamIds).join(', ')}`);
     
-    // Create a new array with updated isPrimary and muted flags
-    // but keep the same playerIds to avoid recreating the embeds
+    // Create a new array with updated isPrimary flags only
+    // Don't update muted flags here - we'll handle audio separately
+    // Keep the same playerIds to avoid recreating the embeds
     const newStreams = streams.map((stream, i) => {
       return {
         ...stream,
         // Update isPrimary flag - only the selected stream is primary
-        isPrimary: i === streamIndex,
-        // Update muted flag - only the primary stream has audio
-        muted: i !== audioIndex
+        isPrimary: i === streamIndex
       };
     });
     
@@ -652,40 +651,13 @@ function ViewerContent() {
       }
     });
     
-    // Update the muted state of the players directly and ensure all previously playing streams continue playing
-    Object.keys(embedRefs.current).forEach(playerId => {
-      const embed = embedRefs.current[playerId];
-      if (embed && embed.getPlayer) {
-        const player = embed.getPlayer();
-        if (player) {
-          // Find which stream this player belongs to
-          const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
-          if (streamIndex !== -1) {
-            // Update muted state
-            player.setMuted(streamIndex !== audioIndex);
-            
-            // If this stream was playing before, make sure it continues playing
-            if (playingStreamIds.has(playerId)) {
-              // Use setTimeout to ensure this happens after the muted state is updated
-              setTimeout(() => {
-                try {
-                  console.log(`Ensuring stream ${newStreams[streamIndex].channel} continues playing`);
-                  player.play();
-                } catch (error) {
-                  console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
-                }
-              }, 100);
-            }
-          }
-        }
-      }
-    });
-    
-    // Update the active audio index
-    setActiveAudioIndex(audioIndex);
-    
-    // Update the streams state with the new array
+    // First update the streams state with the new array
+    // This ensures the UI reflects the new primary stream immediately
     setStreams(newStreams);
+    
+    // Then update the active audio index
+    // This will trigger the setActiveAudio effect which will handle the audio changes
+    setActiveAudioIndex(audioIndex);
     
     // Track interaction end
     performanceMonitor.trackInteractionEnd('set-primary-stream');
@@ -728,92 +700,64 @@ function ViewerContent() {
     const playingStreamIds = new Set(playingStreamsRef.current);
     console.log(`Currently playing streams: ${Array.from(playingStreamIds).join(', ')}`);
     
-    // Create a new array with updated muted flags
+    // Create a new array with updated muted flags, but preserve isPrimary flags
     const newStreams = streams.map((stream, i) => ({
       ...stream,
       muted: i !== index,
     }));
     
-    // Track if we need to show play buttons due to autoplay blocking
-    const [playbackBlockedStreams, setPlaybackBlockedStreams] = useState<Set<string>>(new Set());
+    // Update the active audio index first
+    setActiveAudioIndex(index);
+    
+    // Update the streams state with the new array
+    setStreams(newStreams);
     
     // Update the actual players if they exist
     // This is the key part - we update the players directly without recreating them
-    Object.keys(embedRefs.current).forEach(playerId => {
-      const embed = embedRefs.current[playerId];
-      if (embed && embed.getPlayer) {
-        const player = embed.getPlayer();
-        if (player) {
-          // Find which stream this player belongs to
-          const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
-          if (streamIndex !== -1) {
-            // For the stream that should have audio, handle it differently
-            if (streamIndex === index) {
-              // First mute it (this always works)
-              player.setMuted(false);
-              
-              // If this stream was playing before, make sure it continues playing
-              if (playingStreamIds.has(playerId)) {
-                // Use Promise to handle autoplay blocking (Chrome)
-                try {
-                  console.log(`Ensuring stream ${newStreams[streamIndex].channel} continues playing`);
-                  const playPromise = player.play();
-                  
-                  // Handle the Promise if it exists (modern browsers)
-                  if (playPromise !== undefined) {
-                    playPromise
-                      .then(() => {
-                        // Playback started successfully
-                        console.log(`Stream ${newStreams[streamIndex].channel} playing successfully`);
-                        // Remove from blocked streams if it was there
-                        if (playbackBlockedStreams.has(playerId)) {
-                          const newBlockedStreams = new Set(playbackBlockedStreams);
-                          newBlockedStreams.delete(playerId);
-                          setPlaybackBlockedStreams(newBlockedStreams);
-                        }
-                      })
-                      .catch((error: Error) => {
-                        // Autoplay was prevented (likely Chrome's policy)
-                        console.error(`Autoplay blocked for ${newStreams[streamIndex].channel}:`, error);
-                        // Add to blocked streams to show play button
-                        const newBlockedStreams = new Set(playbackBlockedStreams);
-                        newBlockedStreams.add(playerId);
-                        setPlaybackBlockedStreams(newBlockedStreams);
-                      });
+    // We do this AFTER updating state to ensure React has a chance to render
+    // This helps avoid the black screen issue
+    setTimeout(() => {
+      Object.keys(embedRefs.current).forEach(playerId => {
+        const embed = embedRefs.current[playerId];
+        if (embed && embed.getPlayer) {
+          const player = embed.getPlayer();
+          if (player) {
+            // Find which stream this player belongs to
+            const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
+            if (streamIndex !== -1) {
+              // For the stream that should have audio, handle it differently
+              if (streamIndex === index) {
+                // First set muted state
+                player.setMuted(false);
+                
+                // If this stream was playing before, make sure it continues playing
+                if (playingStreamIds.has(playerId)) {
+                  try {
+                    console.log(`Ensuring stream ${newStreams[streamIndex].channel} continues playing`);
+                    player.play();
+                  } catch (error) {
+                    console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
                   }
-                } catch (error) {
-                  console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
                 }
-              }
-            } else {
-              // For other streams, just mute them
-              player.setMuted(true);
-              
-              // If this stream was playing before, make sure it continues playing
-              if (playingStreamIds.has(playerId)) {
-                try {
-                  // For muted streams, autoplay is always allowed
-                  player.play();
-                } catch (error) {
-                  console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
+              } else {
+                // For other streams, just mute them
+                player.setMuted(true);
+                
+                // If this stream was playing before, make sure it continues playing
+                if (playingStreamIds.has(playerId)) {
+                  try {
+                    // For muted streams, autoplay is always allowed
+                    player.play();
+                  } catch (error) {
+                    console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
+                  }
                 }
               }
             }
           }
         }
-      }
-    });
-    
-    // Log the updated streams array to verify isPrimary flags are preserved
-    console.log('setActiveAudio - Updated streams:', newStreams.map(s =>
-      `${s.channel}: isPrimary=${s.isPrimary}, muted=${s.muted}`
-    ));
-    
-    // Update the active audio index
-    setActiveAudioIndex(index);
-    
-    // Update the streams state with the new array
-    setStreams(newStreams);
+      });
+    }, 50); // Short delay to ensure React has updated the DOM
     
     // Track interaction end
     performanceMonitor.trackInteractionEnd('set-active-audio');
