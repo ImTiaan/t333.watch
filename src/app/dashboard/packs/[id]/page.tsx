@@ -155,7 +155,12 @@ export default async function PackDetailsPage({ params }: PageProps) {
         </div>
         
         {/* Share section */}
-        <SharePackSection packId={params.id} />
+        <SharePackSection
+          packId={params.id}
+          packTitle={pack.title}
+          packDescription={pack.description}
+          packThumbnail={`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/og?title=${encodeURIComponent(pack.title)}&streams=${encodeURIComponent(pack.pack_streams?.map((s: any) => s.twitch_channel).join(',') || '')}`}
+        />
       </div>
       
       {/* Stream manager (only for owner) */}

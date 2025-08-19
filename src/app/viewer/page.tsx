@@ -14,7 +14,9 @@ import { getGridTemplateStyles, getGridArea, getPlaceholderCount } from '@/lib/g
 import performanceMonitor from '@/lib/performance';
 import StreamPerformanceTracker from '@/components/stream/StreamPerformanceTracker';
 import { StreamPerformanceWarning } from '@/components/ui/PerformanceWarning';
-import analytics, { EventCategory, StreamEvents } from '@/lib/analytics';
+import StreamQualityManager, { StreamQuality } from '@/components/stream/StreamQualityManager';
+import PackMetadata from '@/components/seo/PackMetadata';
+import analytics, { EventCategory, StreamEvents, PerformanceEvents } from '@/lib/analytics';
 
 // Define the Twitch Embed type
 declare global {
@@ -123,6 +125,9 @@ function ViewerContent() {
   const [packTitle, setPackTitle] = useState<string | null>(null);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [currentQuality, setCurrentQuality] = useState<StreamQuality>('auto');
+  const [packDescription, setPackDescription] = useState<string | null>(null);
+  const [streamChannels, setStreamChannels] = useState<string[]>([]);
 
   // State to track if we're viewing a public pack
   const [isPublicPack, setIsPublicPack] = useState(false);
@@ -672,6 +677,34 @@ function ViewerContent() {
     // Track interaction end
     performanceMonitor.trackInteractionEnd('set-active-audio');
   };
+  
+  // Function to handle quality changes for all streams
+  const handleQualityChange = (quality: StreamQuality) => {
+    setCurrentQuality(quality);
+    
+    // Track quality change
+    analytics.trackPerformanceEvent(PerformanceEvents.AUTO_QUALITY_CHANGE, {
+      previousQuality: currentQuality,
+      newQuality: quality,
+      streamCount: streams.length,
+      isPremium: user?.premium_flag || false
+    });
+    
+    // Apply quality change to all stream players
+    Object.keys(embedRefs.current).forEach(playerId => {
+      const embed = embedRefs.current[playerId];
+      if (embed && embed.getPlayer) {
+        try {
+          const player = embed.getPlayer();
+          if (player && player.setQuality) {
+            player.setQuality(quality);
+          }
+        } catch (error) {
+          console.error('Error setting quality:', error);
+        }
+      }
+    });
+  };
 
   // Show loading state while checking authentication or loading pack
   if (isLoading || isLoadingPack) {
@@ -903,6 +936,12 @@ function ViewerContent() {
       <StreamPerformanceWarning
         streamCount={streams.length}
         isPremium={user?.premium_flag || false}
+      />
+      
+      {/* Stream Quality Manager - Automatically adjusts quality based on performance */}
+      <StreamQualityManager
+        streamCount={streams.length}
+        onQualityChange={handleQualityChange}
       />
       
       {/* Upgrade Modal */}

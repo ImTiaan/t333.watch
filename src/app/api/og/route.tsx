@@ -1,0 +1,255 @@
+import { ImageResponse } from 'next/og';
+import { NextRequest } from 'next/server';
+
+export const runtime = 'edge';
+
+/**
+ * API route that generates Open Graph images for packs
+ * Used when sharing links on social media platforms
+ * 
+ * Example usage:
+ * /api/og?title=My%20Pack&streams=channel1,channel2,channel3
+ */
+export async function GET(req: NextRequest) {
+  try {
+    // Get the searchParams from the request URL
+    const { searchParams } = new URL(req.url);
+    
+    // Get the title and streams from the searchParams
+    const title = searchParams.get('title') || 'Twitch Stream Pack';
+    const streamsParam = searchParams.get('streams') || '';
+    const streams = streamsParam ? streamsParam.split(',') : [];
+    
+    // Load the Inter font
+    const interRegular = await fetch(
+      new URL('../../../../public/fonts/Inter-Regular.ttf', import.meta.url)
+    ).then((res) => res.arrayBuffer());
+    
+    const interBold = await fetch(
+      new URL('../../../../public/fonts/Inter-Bold.ttf', import.meta.url)
+    ).then((res) => res.arrayBuffer());
+    
+    // Generate the image
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#0e0e10',
+            color: 'white',
+            padding: '40px',
+            fontFamily: 'Inter',
+          }}
+        >
+          {/* Logo */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '20px',
+            }}
+          >
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-4l-4 4v-4H5a1 1 0 0 1-1-1V5z"
+                fill="#9146FF"
+                stroke="#9146FF"
+                strokeWidth="2"
+              />
+            </svg>
+            <span
+              style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                marginLeft: '10px',
+              }}
+            >
+              t333.watch
+            </span>
+          </div>
+          
+          {/* Pack title */}
+          <div
+            style={{
+              fontSize: '48px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              marginBottom: '30px',
+              maxWidth: '80%',
+            }}
+          >
+            {title}
+          </div>
+          
+          {/* Stream grid preview */}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '20px',
+              maxWidth: '80%',
+            }}
+          >
+            {streams.slice(0, 4).map((stream, index) => (
+              <div
+                key={index}
+                style={{
+                  backgroundColor: '#18181b',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  width: '280px',
+                  height: '160px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid #2d2d3a',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: '#9146FF',
+                  }}
+                >
+                  {stream}
+                </div>
+              </div>
+            ))}
+            
+            {/* Show placeholder for additional streams */}
+            {streams.length > 4 && (
+              <div
+                style={{
+                  backgroundColor: '#18181b',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  width: '280px',
+                  height: '160px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid #2d2d3a',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: '#9146FF',
+                  }}
+                >
+                  +{streams.length - 4} more
+                </div>
+              </div>
+            )}
+            
+            {/* Show empty placeholders if less than 4 streams */}
+            {streams.length < 4 &&
+              Array.from({ length: 4 - streams.length }).map((_, index) => (
+                <div
+                  key={`empty-${index}`}
+                  style={{
+                    backgroundColor: '#18181b',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    width: '280px',
+                    height: '160px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px dashed #2d2d3a',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '24px',
+                      color: '#2d2d3a',
+                    }}
+                  >
+                    Empty
+                  </div>
+                </div>
+              ))}
+          </div>
+          
+          {/* Footer */}
+          <div
+            style={{
+              marginTop: '40px',
+              fontSize: '24px',
+              color: '#9146FF',
+            }}
+          >
+            Watch multiple Twitch streams simultaneously
+          </div>
+        </div>
+      ),
+      {
+        width: 1200,
+        height: 630,
+        fonts: [
+          {
+            name: 'Inter',
+            data: interRegular,
+            weight: 400,
+            style: 'normal',
+          },
+          {
+            name: 'Inter',
+            data: interBold,
+            weight: 700,
+            style: 'normal',
+          },
+        ],
+      }
+    );
+  } catch (error) {
+    // If there's an error, return a simple error image
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#0e0e10',
+            color: 'white',
+            padding: '40px',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '48px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+            }}
+          >
+            t333.watch
+          </div>
+          <div
+            style={{
+              fontSize: '24px',
+              marginTop: '20px',
+            }}
+          >
+            Watch multiple Twitch streams simultaneously
+          </div>
+        </div>
+      ),
+      {
+        width: 1200,
+        height: 630,
+      }
+    );
+  }
+}

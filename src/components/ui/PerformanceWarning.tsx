@@ -128,46 +128,146 @@ export const PerformanceWarningContainer: React.FC<{
   );
 };
 
+// Helper function to detect device capabilities
+const detectDeviceCapabilities = (): {
+  tier: 'low' | 'medium' | 'high';
+  maxRecommendedStreams: number;
+  description: string;
+} => {
+  // Only run in browser
+  if (typeof window === 'undefined') {
+    return { tier: 'medium', maxRecommendedStreams: 4, description: 'Standard device' };
+  }
+
+  // Check for mobile devices first
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  // Check for memory (if available)
+  const hasLowMemory = 'deviceMemory' in navigator && (navigator as any).deviceMemory < 4;
+  
+  // Check for CPU cores (if available)
+  const hasLowCPU = 'hardwareConcurrency' in navigator && navigator.hardwareConcurrency < 4;
+  
+  // Check for connection speed (if available)
+  const hasSlowConnection = 'connection' in navigator &&
+    ['slow-2g', '2g', '3g'].includes((navigator as any).connection?.effectiveType);
+  
+  // Determine device tier
+  if (isMobile || hasLowMemory || hasLowCPU || hasSlowConnection) {
+    return {
+      tier: 'low',
+      maxRecommendedStreams: 2,
+      description: isMobile ? 'Mobile device' : 'Low-performance device'
+    };
+  } else if ('hardwareConcurrency' in navigator && navigator.hardwareConcurrency >= 8) {
+    return {
+      tier: 'high',
+      maxRecommendedStreams: 6,
+      description: 'High-performance device'
+    };
+  } else {
+    return {
+      tier: 'medium',
+      maxRecommendedStreams: 4,
+      description: 'Standard device'
+    };
+  }
+};
+
 // Helper component for stream-specific warnings
 export const StreamPerformanceWarning: React.FC<{
   streamCount: number;
   isPremium: boolean;
 }> = ({ streamCount, isPremium }) => {
-  // Only show warnings for non-premium users with 3 streams
-  // or premium users with 6+ streams
-  const shouldShowWarning =
-    (!isPremium && streamCount >= 3) ||
-    (isPremium && streamCount >= 6);
+  // Detect device capabilities
+  const [deviceCapabilities] = useState(detectDeviceCapabilities);
+  
+  // Determine warning level based on stream count and device capabilities
+  const getWarningLevel = (): {
+    shouldShow: boolean;
+    level: WarningLevel;
+    message: string;
+    suggestion: string;
+  } => {
+    // Free user limits
+    if (!isPremium) {
+      if (streamCount >= 3) {
+        return {
+          shouldShow: true,
+          level: 'info',
+          message: `You've reached the maximum of ${streamCount} streams for free users`,
+          suggestion: "Upgrade to premium for unlimited streams and enhanced features"
+        };
+      }
+      return { shouldShow: false, level: 'info', message: '', suggestion: '' };
+    }
+    
+    // Premium user warnings based on device capabilities and stream count
+    const { maxRecommendedStreams, description, tier } = deviceCapabilities;
+    
+    // Critical warning - way too many streams for device
+    if (streamCount >= maxRecommendedStreams * 2) {
+      return {
+        shouldShow: true,
+        level: 'error',
+        message: `Performance will significantly degrade with ${streamCount} streams on your ${description}`,
+        suggestion: `We recommend a maximum of ${maxRecommendedStreams} streams for optimal performance on your device`
+      };
+    }
+    
+    // Warning - approaching device limits
+    if (streamCount >= maxRecommendedStreams * 1.5) {
+      return {
+        shouldShow: true,
+        level: 'warning',
+        message: `Performance may degrade with ${streamCount} streams on your ${description}`,
+        suggestion: `Consider closing streams you're not actively watching or reducing stream quality`
+      };
+    }
+    
+    // Caution - getting close to limits
+    if (streamCount >= maxRecommendedStreams) {
+      return {
+        shouldShow: true,
+        level: 'info',
+        message: `You're approaching the recommended limit for your ${description}`,
+        suggestion: tier === 'low' ?
+          "Consider using our mobile-optimized view for better performance" :
+          "For best performance, keep the most important streams in view"
+      };
+    }
+    
+    // No warning needed
+    return { shouldShow: false, level: 'info', message: '', suggestion: '' };
+  };
+  
+  const { shouldShow, level, message, suggestion } = getWarningLevel();
   
   // Track stream count warning event when the component renders with a warning
   useEffect(() => {
-    if (shouldShowWarning) {
+    if (shouldShow) {
       analytics.trackPerformanceEvent(
         isPremium ? PerformanceEvents.HIGH_MEMORY : 'free_tier_limit',
         {
           streamCount,
           isPremium,
+          deviceTier: deviceCapabilities.tier,
+          maxRecommendedStreams: deviceCapabilities.maxRecommendedStreams,
+          warningLevel: level,
           warningType: isPremium ? 'performance' : 'upgrade'
         }
       );
     }
-  }, [shouldShowWarning, streamCount, isPremium]);
+  }, [shouldShow, streamCount, isPremium, level, deviceCapabilities]);
   
-  if (!shouldShowWarning) return null;
-  
-  const message = isPremium
-    ? `Performance may degrade with ${streamCount} streams open`
-    : `You've reached the maximum of ${streamCount} streams for free users`;
-  
-  const suggestion = isPremium
-    ? "Consider closing streams you're not actively watching"
-    : "Upgrade to premium for unlimited streams";
+  if (!shouldShow) return null;
   
   return (
     <PerformanceWarning
       message={message}
       suggestion={suggestion}
-      level={isPremium ? 'warning' : 'info'}
+      level={level}
+      autoHideDuration={level === 'error' ? 15000 : 8000} // Keep error messages visible longer
     />
   );
 };

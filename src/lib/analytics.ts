@@ -93,7 +93,9 @@ export const PerformanceEvents = {
   SLOW_LOAD: 'slow_load',
   SLOW_RESPONSE: 'slow_response',
   API_LATENCY: 'api_latency',
-  RESOURCE_ERROR: 'resource_error'
+  RESOURCE_ERROR: 'resource_error',
+  AUTO_QUALITY_CHANGE: 'auto_quality_change',
+  QUALITY_RECOMMENDATION: 'quality_recommendation'
 };
 
 // Subscription Events
