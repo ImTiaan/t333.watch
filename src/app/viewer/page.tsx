@@ -236,7 +236,7 @@ function ViewerContent() {
             .map((stream: any, index: number) => ({
               id: Date.now() + '-' + stream.twitch_channel,
               channel: stream.twitch_channel,
-              muted: true, // All streams start muted except the first one
+              muted: true, // All streams start muted to comply with Chrome's autoplay policy
               playerId: `twitch-player-${Date.now()}-${stream.twitch_channel}`,
               isPrimary: index === 0, // First stream is primary by default
             }));
