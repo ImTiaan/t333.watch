@@ -264,7 +264,7 @@ function ViewerContent() {
     console.log("Initializing Twitch embeds with streams:", streams.map(s => `${s.channel} (isPrimary: ${s.isPrimary})`));
     console.log("Authentication state:", isAuthenticated ? "Authenticated" : "Not authenticated");
     
-    // Don't clear existing embeds to preserve playback state
+    // CRITICAL: Don't clear existing embeds to preserve playback state
     // This is key to maintaining the user gesture token for Chrome's autoplay policy
     // We need to keep the existing embeds to avoid the black screen issue
     
@@ -289,9 +289,38 @@ function ViewerContent() {
     async function initializeEmbeds() {
       if (!window.Twitch) return;
       
-      console.log("Starting embed initialization for streams:",
+      console.log("DEBUG: Starting embed initialization for streams:",
         streams.map(s => `${s.channel} (isPrimary: ${s.isPrimary}, playerId: ${s.playerId})`));
       
+      // Log all DOM elements with twitch-player IDs
+      console.log("DEBUG: DOM elements before initialization:");
+      document.querySelectorAll('[id^="twitch-player-"]').forEach(el => {
+        console.log(`DEBUG: Found element with ID: ${el.id}`);
+      });
+      
+      // Log all existing embed refs
+      console.log("DEBUG: Embed refs before initialization:");
+      Object.keys(embedRefs.current).forEach(playerId => {
+        console.log(`DEBUG: Embed ref for ${playerId}: ${embedRefs.current[playerId] ? 'exists' : 'missing'}`);
+      });
+      
+      // First, handle authentication for all embeds
+      if (isAuthenticated) {
+        try {
+          const authToken = await getAccessToken();
+          if (authToken) {
+            // This is the key - Twitch embed looks for this specific localStorage key
+            localStorage.setItem('twitch.embed.auth.token', authToken);
+            console.log(`DEBUG: Set auth token in localStorage for Twitch embed: ${authToken.substring(0, 5)}...`);
+          } else {
+            console.warn('DEBUG: No auth token available despite being authenticated');
+          }
+        } catch (error) {
+          console.error('DEBUG: Error getting access token:', error);
+        }
+      }
+      
+      // Create new embeds for streams that don't have one
       for (const stream of streams) {
         // Check if the embed already exists
         if (embedRefs.current[stream.playerId]) {
@@ -319,31 +348,13 @@ function ViewerContent() {
             height: '100%',
             channel: stream.channel,
             parent: [window.location.hostname],
-            muted: stream.muted,
+            muted: true, // Always start muted, we'll update this later
             layout: 'video', // Use video-only layout (no chat)
             allowfullscreen: true,
             autoplay: true,
             // Force a unique timestamp to prevent caching issues
             time: Date.now().toString()
           };
-          
-          // For authentication, we need to handle it differently
-          // Instead of passing the token in the embed options, we'll set it in localStorage
-          // with a specific key that the Twitch embed looks for
-          if (isAuthenticated) {
-            try {
-              const authToken = await getAccessToken();
-              if (authToken) {
-                // This is the key - Twitch embed looks for this specific localStorage key
-                localStorage.setItem('twitch.embed.auth.token', authToken);
-                console.log(`Set auth token in localStorage for Twitch embed: ${authToken.substring(0, 5)}...`);
-              } else {
-                console.warn('No auth token available despite being authenticated');
-              }
-            } catch (error) {
-              console.error('Error getting access token:', error);
-            }
-          }
           
           // Add type guard to ensure window.Twitch is defined
           if (!window.Twitch) return;
@@ -356,61 +367,32 @@ function ViewerContent() {
           
           // Add event listener for ready
           embed.addEventListener('ready', () => {
-            const player = embed.getPlayer();
-            player.setMuted(stream.muted);
-            
-            // Log authentication status
-            if (isAuthenticated) {
-              console.log(`Player ready for ${stream.channel} with authentication`);
-            } else {
-              console.log(`Player ready for ${stream.channel} without authentication`);
-            }
+            console.log(`DEBUG: Player ready for ${stream.channel}`);
             
             // Add to playing streams by default since autoplay is enabled
             playingStreamsRef.current.add(stream.playerId);
             
             // Add event listeners to the embed for play/pause events
             embed.addEventListener('play', () => {
-              console.log(`Stream ${stream.channel} started playing`);
+              console.log(`DEBUG: Stream ${stream.channel} started playing`);
               playingStreamsRef.current.add(stream.playerId);
             });
             
             embed.addEventListener('pause', () => {
-              console.log(`Stream ${stream.channel} paused`);
+              console.log(`DEBUG: Stream ${stream.channel} paused`);
               playingStreamsRef.current.delete(stream.playerId);
             });
           });
         } catch (error) {
-          console.error('Error initializing Twitch embed:', error);
+          console.error('DEBUG: Error initializing Twitch embed:', error);
         }
       }
       
-      // Apply audio settings - but don't call setActiveAudio which would cause an infinite loop
-      if (activeAudioIndex !== null) {
-        // Just update the players directly without changing state
-        // We need to do this with a slight delay to ensure the DOM is ready
-        setTimeout(() => {
-          streams.forEach((stream, i) => {
-            const embed = embedRefs.current[stream.playerId];
-            if (embed && embed.getPlayer) {
-              const player = embed.getPlayer();
-              if (player) {
-                try {
-                  // Set muted state based on activeAudioIndex
-                  player.setMuted(i !== activeAudioIndex);
-                  
-                  // If this is the active audio stream, ensure it's playing
-                  if (i === activeAudioIndex) {
-                    player.play();
-                  }
-                } catch (error) {
-                  console.error(`Error updating audio for ${stream.channel}:`, error);
-                }
-              }
-            }
-          });
-        }, 100);
-      }
+      // Log all embeds after initialization
+      console.log("DEBUG: Embed refs after initialization:");
+      Object.keys(embedRefs.current).forEach(playerId => {
+        console.log(`DEBUG: Embed ref for ${playerId}: ${embedRefs.current[playerId] ? 'exists' : 'missing'}`);
+      });
     }
     
     // Cleanup function
@@ -419,11 +401,48 @@ function ViewerContent() {
       if (isAuthenticated) {
         localStorage.removeItem('twitch.embed.auth.token');
       }
-      
-      // We don't need to explicitly destroy Twitch embeds
-      // They will be garbage collected when their container elements are removed
     };
-  }, [streams, activeAudioIndex, getAccessToken, isAuthenticated]);
+  }, [streams, getAccessToken, isAuthenticated]);
+  
+  // Separate useEffect to handle audio changes
+  // This is crucial to avoid the black screen issue
+  useEffect(() => {
+    if (activeAudioIndex === null) return;
+    
+    console.log(`DEBUG: Setting active audio index to ${activeAudioIndex}`);
+    
+    // We need to do this with a slight delay to ensure the DOM is ready
+    setTimeout(() => {
+      streams.forEach((stream, i) => {
+        const embed = embedRefs.current[stream.playerId];
+        if (!embed || !embed.getPlayer) {
+          console.error(`DEBUG: No embed found for ${stream.channel} (${stream.playerId})`);
+          return;
+        }
+        
+        const player = embed.getPlayer();
+        if (!player) {
+          console.error(`DEBUG: No player found for ${stream.channel} (${stream.playerId})`);
+          return;
+        }
+        
+        try {
+          // Set muted state based on activeAudioIndex
+          const shouldBeMuted = i !== activeAudioIndex;
+          console.log(`DEBUG: Setting ${stream.channel} muted=${shouldBeMuted}`);
+          player.setMuted(shouldBeMuted);
+          
+          // If this is the active audio stream, ensure it's playing
+          if (i === activeAudioIndex) {
+            console.log(`DEBUG: Ensuring ${stream.channel} is playing (active audio)`);
+            player.play();
+          }
+        } catch (error) {
+          console.error(`DEBUG: Error updating audio for ${stream.channel}:`, error);
+        }
+      });
+    }, 200); // Longer delay to ensure React has updated the DOM
+  }, [activeAudioIndex, streams]);
 
   // Add a new stream
   const addStream = (channelName?: string) => {
@@ -646,13 +665,12 @@ function ViewerContent() {
       console.log(`DEBUG: Embed for ${playerId}: ${embedRefs.current[playerId] ? 'exists' : 'missing'}`);
     });
     
-    // First update the streams to mark the selected stream as primary
-    // This is important to do before changing audio to avoid race conditions
-    // Keep the same playerIds to maintain the connection to the DOM elements
+    // CRITICAL CHANGE: Update the streams array without changing playerIds
+    // This ensures the DOM elements and Twitch embeds stay connected
     const newStreams = streams.map((stream, i) => ({
       ...stream,
       isPrimary: i === streamIndex,
-      // Explicitly keep the same playerId
+      // Keep the same playerId
       playerId: stream.playerId
     }));
     
@@ -660,7 +678,7 @@ function ViewerContent() {
       `${s.channel} (id: ${s.id}, playerId: ${s.playerId}, isPrimary: ${s.isPrimary})`
     ));
     
-    // Update the streams state
+    // First update the streams state
     setStreams(newStreams);
     
     // Log performance metric
@@ -672,26 +690,10 @@ function ViewerContent() {
       }
     });
     
-    // After updating the primary stream, set the active audio
-    // We do this last to ensure the UI has updated first
-    setTimeout(() => {
-      console.log(`DEBUG: Setting active audio index to ${streamIndex}`);
-      
-      // Log DOM elements after update
-      console.log(`DEBUG: DOM elements after update:`);
-      newStreams.forEach(stream => {
-        const element = document.getElementById(stream.playerId);
-        console.log(`DEBUG: ${stream.channel} (${stream.playerId}): ${element ? 'exists' : 'missing'}`);
-      });
-      
-      // Log embed refs after update
-      console.log(`DEBUG: Embed refs after update:`);
-      Object.keys(embedRefs.current).forEach(playerId => {
-        console.log(`DEBUG: Embed for ${playerId}: ${embedRefs.current[playerId] ? 'exists' : 'missing'}`);
-      });
-      
-      setActiveAudioIndex(streamIndex);
-    }, 100);
+    // Then update the active audio index directly
+    // The separate useEffect will handle the audio changes
+    console.log(`DEBUG: Setting active audio index to ${streamIndex}`);
+    setActiveAudioIndex(streamIndex);
     
     performanceMonitor.trackInteractionEnd('set-primary-stream');
   };
@@ -703,13 +705,17 @@ function ViewerContent() {
     // Track interaction start
     performanceMonitor.trackInteractionStart('set-active-audio');
     
+    console.log(`DEBUG: setActiveAudio called for index ${index}`);
+    
     if (index < 0 || index >= streams.length) {
+      console.error(`DEBUG: Invalid index ${index}`);
       performanceMonitor.trackInteractionEnd('set-active-audio');
       return;
     }
     
     // Get the channel name for logging
     const channelName = streams[index].channel;
+    console.log(`DEBUG: Setting active audio to ${channelName}`);
     
     // Track analytics event - change active audio
     analytics.trackStreamEvent(StreamEvents.CHANGE_AUDIO, {
@@ -729,20 +735,13 @@ function ViewerContent() {
       }
     });
     
-    // Create a new array with updated muted flags, but preserve isPrimary flags
-    // Keep the same playerIds to maintain the connection to the DOM elements
-    const newStreams = streams.map((stream, i) => ({
-      ...stream,
-      muted: i !== index,
-      // Explicitly keep the same playerId
-      playerId: stream.playerId
-    }));
+    // CRITICAL CHANGE: Don't update the streams array with muted flags
+    // Instead, just update the activeAudioIndex and let the useEffect handle the audio
+    // This avoids unnecessary React re-renders that might cause the black screen issue
     
     // Update the active audio index
+    console.log(`DEBUG: Setting active audio index to ${index}`);
     setActiveAudioIndex(index);
-    
-    // Update the streams state with the new array
-    setStreams(newStreams);
     
     // Track interaction end
     performanceMonitor.trackInteractionEnd('set-active-audio');
