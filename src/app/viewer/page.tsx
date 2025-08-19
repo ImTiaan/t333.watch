@@ -5,20 +5,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { config } from '@/lib/config';
-import { canAddMoreStreams, getMaxStreams, isPremium } from '@/lib/premium';
+import { canAddMoreStreams, getMaxStreams } from '@/lib/premium';
 import ChannelSelector from '@/components/stream/ChannelSelector';
 import UpgradeModal from '@/components/premium/UpgradeModal';
 import StreamSidebar from '@/components/stream/StreamSidebar';
 import SidebarToggle from '@/components/stream/SidebarToggle';
-import { getGridTemplateStyles, getGridArea, getPlaceholderCount, getCustomGridTemplateStyles, LayoutType, CustomLayoutConfig } from '@/lib/gridUtils';
+import { getGridTemplateStyles, getGridArea, getPlaceholderCount } from '@/lib/gridUtils';
 import performanceMonitor from '@/lib/performance';
 import StreamPerformanceTracker from '@/components/stream/StreamPerformanceTracker';
 import { StreamPerformanceWarning } from '@/components/ui/PerformanceWarning';
 import StreamQualityManager, { StreamQuality } from '@/components/stream/StreamQualityManager';
 import PackMetadata from '@/components/seo/PackMetadata';
 import ShareModal from '@/components/packs/ShareModal';
-import LayoutSelector from '@/components/layout/LayoutSelector';
-import { DragDropProvider, useDraggableStream } from '@/components/layout/DragDropProvider';
 import analytics, { EventCategory, StreamEvents, PerformanceEvents } from '@/lib/analytics';
 import './styles.css'; // Import the CSS styles for stream positioning
 
@@ -73,108 +71,6 @@ interface Stream {
   playerId: string;
   embed?: any;
   isPrimary?: boolean;
-  isPinned?: boolean;
-}
-
-// StreamContainer component that handles drag and drop
-function StreamContainer({ 
-  stream, 
-  index, 
-  gridArea, 
-  isPrimary, 
-  activeAudioIndex, 
-  setPrimaryStream, 
-  setActiveAudio, 
-  removeStream,
-  togglePinStream,
-  user
-}: {
-  stream: Stream;
-  index: number;
-  gridArea: string;
-  isPrimary: boolean;
-  activeAudioIndex: number | null;
-  setPrimaryStream: (id: string) => void;
-  setActiveAudio: (index: number) => void;
-  removeStream: (id: string) => void;
-  togglePinStream: (id: string) => void;
-  user: any;
-}) {
-  const { dragProps, dragClasses, isDraggable } = useDraggableStream(stream.id);
-  
-  return (
-    <div
-      key={stream.id}
-      className={`bg-black relative rounded overflow-hidden aspect-video group ${isPrimary ? 'primary-stream' : 'secondary-stream'} ${dragClasses.container}`}
-      style={{ gridArea }}
-      {...dragProps}
-    >
-      {/* IMPORTANT: This is the container for the Twitch embed */}
-      {/* The ID must remain stable for the Twitch embed to work */}
-      <div
-        id={stream.playerId}
-        className="absolute inset-0 w-full h-full"
-        data-channel={stream.channel}
-        data-is-primary={isPrimary.toString()}
-      ></div>
-      
-      {/* Stream Controls Overlay */}
-      <div className="absolute top-0 left-0 right-0 p-2 bg-gradient-to-b from-black/70 to-transparent flex justify-between items-center">
-        <div className="text-white font-medium truncate">{stream.channel}</div>
-        <div className="flex gap-2">
-          {!isPrimary && (
-            <button
-              onClick={() => setPrimaryStream(stream.id)}
-              className="p-1 rounded bg-black/50 hover:bg-[#9146FF]/70"
-              title="Make Primary Stream"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-            </button>
-          )}
-          <button
-            onClick={() => setActiveAudio(index)}
-            className={`p-1 rounded ${activeAudioIndex === index ? 'bg-[#9146FF]' : 'bg-black/50 hover:bg-black/70'}`}
-            title={activeAudioIndex === index ? 'Active Audio' : 'Set as Active Audio'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 01-1.414-2.536m-1.414 2.536a9 9 0 01-2.758-6.036m2.758 6.036a9 9 0 002.758 6.036" />
-            </svg>
-          </button>
-          {/* Pin button for premium users */}
-          {isPremium(user) && (
-            <button
-              onClick={() => togglePinStream(stream.id)}
-              className={`p-1 rounded ${stream.isPinned ? 'bg-yellow-500' : 'bg-black/50 hover:bg-yellow-500/70'}`}
-              title={stream.isPinned ? 'Unpin Stream' : 'Pin Stream'}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill={stream.isPinned ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-            </button>
-          )}
-          <button
-            onClick={() => removeStream(stream.id)}
-            className="p-1 rounded bg-black/50 hover:bg-red-500/70"
-            title="Remove Stream"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      {/* Stream Performance Tracker (invisible component) */}
-      <StreamPerformanceTracker
-        streamId={stream.id}
-        playerId={stream.playerId}
-        embed={null}
-        isVisible={true}
-      />
-    </div>
-  );
 }
 
 // Helper function to determine grid layout based on stream count
@@ -248,10 +144,6 @@ function ViewerContent() {
   
   // Reference to track which streams are playing
   const playingStreamsRef = useRef<Set<string>>(new Set());
-  
-  // State for custom layout configuration (premium feature)
-  const [currentLayout, setCurrentLayout] = useState<LayoutType>(LayoutType.DEFAULT);
-  const [customLayoutConfig, setCustomLayoutConfig] = useState<CustomLayoutConfig | null>(null);
 
   
   // Initialize performance monitoring when component mounts
@@ -818,46 +710,6 @@ function ViewerContent() {
     // Track interaction end
     performanceMonitor.trackInteractionEnd('set-active-audio');
   };
-
-  // Toggle pin status for a stream (premium feature)
-  const togglePinStream = (id: string) => {
-    // Track interaction start
-    performanceMonitor.trackInteractionStart('toggle-pin-stream');
-    
-    console.log(`DEBUG: togglePinStream called for stream ID ${id}`);
-    
-    // Find the stream index
-    const streamIndex = streams.findIndex(stream => stream.id === id);
-    if (streamIndex === -1) {
-      console.error(`DEBUG: Stream with id ${id} not found`);
-      performanceMonitor.trackInteractionEnd('toggle-pin-stream');
-      return;
-    }
-    
-    const stream = streams[streamIndex];
-    const newPinnedState = !stream.isPinned;
-    
-    console.log(`DEBUG: Toggling pin for ${stream.channel} from ${stream.isPinned} to ${newPinnedState}`);
-    
-    // Track analytics event
-    analytics.trackStreamEvent(newPinnedState ? 'PIN_STREAM' : 'UNPIN_STREAM', {
-      channel: stream.channel,
-      streamIndex,
-      isPrimary: stream.isPrimary || false,
-      totalStreams: streams.length
-    });
-    
-    // Update the streams array with the new pin state
-    const newStreams = [...streams];
-    newStreams[streamIndex] = {
-      ...stream,
-      isPinned: newPinnedState
-    };
-    
-    setStreams(newStreams);
-    
-    performanceMonitor.trackInteractionEnd('toggle-pin-stream');
-  };
   
   // Function to handle quality changes for all streams
   const handleQualityChange = (quality: StreamQuality) => {
@@ -932,27 +784,12 @@ function ViewerContent() {
   }
 
   return (
-    <DragDropProvider>
-      <div className="container mx-auto p-2 relative">
+    <div className="container mx-auto p-2 relative">
       {/* Pack title only shown if viewing a saved pack */}
       {packTitle && (
         <div className="mb-2">
           <h2 className="text-xl font-bold">{packTitle}</h2>
           <p className="text-gray-400 text-sm">Viewing saved pack</p>
-        </div>
-      )}
-
-      {/* Layout Selector for Premium Users */}
-      {streams.length > 0 && (
-        <div className="mb-4">
-          <LayoutSelector
-            currentLayout={currentLayout}
-            onLayoutChange={(layout, config) => {
-               setCurrentLayout(layout);
-               setCustomLayoutConfig(config || null);
-             }}
-            streamCount={streams.length}
-          />
         </div>
       )}
 
@@ -971,45 +808,23 @@ function ViewerContent() {
           <div
             className="grid gap-4"
             style={{
-              ...(currentLayout === LayoutType.DEFAULT 
-                ? getGridTemplateStyles(streams.length)
-                : getCustomGridTemplateStyles(streams.length, currentLayout, customLayoutConfig || undefined)
-              )
+              gridTemplateAreas: getGridTemplateStyles(streams.length).gridTemplateAreas,
+              gridTemplateColumns: getGridTemplateStyles(streams.length).gridTemplateColumns,
+              gridTemplateRows: getGridTemplateStyles(streams.length).gridTemplateRows,
             }}
           >
-            {/* Sort streams to prioritize pinned streams */}
-            {[...streams]
-              .sort((a, b) => {
-                // Pinned streams come first
-                if (a.isPinned && !b.isPinned) return -1;
-                if (!a.isPinned && b.isPinned) return 1;
-                // Primary stream comes first among non-pinned
-                if (a.isPrimary && !b.isPrimary) return -1;
-                if (!a.isPrimary && b.isPrimary) return 1;
-                // Otherwise maintain original order
-                return 0;
-              })
-              .map((stream, index) => {
+            {streams.map((stream, index) => {
               const isPrimary = stream.isPrimary || false;
               
-              // Calculate grid area based on sorted order (pinned first, then primary/secondary)
+              // Calculate grid area based on current primary/secondary ordering
               let gridArea: string;
               if (isPrimary) {
                 gridArea = 'primary';
               } else {
-                // For secondary streams, use the index in the sorted array
-                // Skip the primary stream when counting secondary positions
-                const sortedStreams = [...streams].sort((a, b) => {
-                  if (a.isPinned && !b.isPinned) return -1;
-                  if (!a.isPinned && b.isPinned) return 1;
-                  if (a.isPrimary && !b.isPrimary) return -1;
-                  if (!a.isPrimary && b.isPrimary) return 1;
-                  return 0;
-                });
-                
+                // Count how many secondary streams come before this one to determine its slot
                 let secondaryIndex = 0;
-                for (let i = 0; i < sortedStreams.length; i++) {
-                  const s = sortedStreams[i];
+                for (let i = 0; i < streams.length; i++) {
+                  const s = streams[i];
                   if (s.id === stream.id) break;
                   if (!s.isPrimary) secondaryIndex++;
                 }
@@ -1020,19 +835,66 @@ function ViewerContent() {
               const streamKey = stream.id;
               
               return (
-                <StreamContainer
+                <div
                   key={streamKey}
-                  stream={stream}
-                  index={index}
-                  gridArea={gridArea}
-                  isPrimary={isPrimary}
-                  activeAudioIndex={activeAudioIndex}
-                  setPrimaryStream={setPrimaryStream}
-                  setActiveAudio={setActiveAudio}
-                  removeStream={removeStream}
-                  togglePinStream={togglePinStream}
-                  user={user}
-                />
+                  className={`bg-black relative rounded overflow-hidden aspect-video ${isPrimary ? 'primary-stream' : 'secondary-stream'}`}
+                  style={{ gridArea }}
+                >
+                  {/* IMPORTANT: This is the container for the Twitch embed */}
+                  {/* The ID must remain stable for the Twitch embed to work */}
+                  <div
+                    id={stream.playerId}
+                    className="absolute inset-0 w-full h-full"
+                    data-channel={stream.channel}
+                    data-is-primary={isPrimary.toString()}
+                  ></div>
+                  
+                  {/* Stream Controls Overlay */}
+                  <div className="absolute top-0 left-0 right-0 p-2 bg-gradient-to-b from-black/70 to-transparent flex justify-between items-center">
+                    <div className="text-white font-medium truncate">{stream.channel}</div>
+                    <div className="flex gap-2">
+                      {!isPrimary && (
+                        <button
+                          onClick={() => setPrimaryStream(stream.id)}
+                          className="p-1 rounded bg-black/50 hover:bg-[#9146FF]/70"
+                          title="Make Primary Stream"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                          </svg>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setActiveAudio(index)}
+                        className={`p-1 rounded ${activeAudioIndex === index ? 'bg-[#9146FF]' : 'bg-black/50 hover:bg-black/70'}`}
+                        title={activeAudioIndex === index ? 'Active Audio' : 'Set as Active Audio'}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 01-1.414-2.536m-1.414 2.536a9 9 0 01-2.758-6.036m2.758 6.036a9 9 0 002.758 6.036" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => removeStream(stream.id)}
+                        className="p-1 rounded bg-black/50 hover:bg-red-500/70"
+                        title="Remove Stream"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Primary Stream is indicated by the purple border */}
+                  
+                  {/* Stream Performance Tracker (invisible component) */}
+                  <StreamPerformanceTracker
+                    streamId={stream.id}
+                    playerId={stream.playerId}
+                    embed={embedRefs.current[stream.playerId]}
+                    isVisible={true}
+                  />
+                </div>
               );
             })}
             
@@ -1150,8 +1012,7 @@ function ViewerContent() {
         packDescription={packDescription || 'Watch multiple Twitch streams simultaneously'}
         streams={streams.map(s => s.channel)}
       />
-      </div>
-    </DragDropProvider>
+    </div>
   );
 }
 
