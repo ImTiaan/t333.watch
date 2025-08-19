@@ -5,6 +5,9 @@ import { twitchApi } from '@/lib/twitch-api';
 import { getUser, getPack, createUser } from '@/lib/supabase';
 import PackForm from '@/components/packs/PackForm';
 
+// Force dynamic rendering because this page uses cookies
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
   params: {
     id: string;

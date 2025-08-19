@@ -6,6 +6,9 @@ import { getUser, getPack, createUser } from '@/lib/supabase';
 import PackStreamManager from '@/components/packs/PackStreamManager';
 import SharePackSection from '@/components/packs/SharePackSection';
 
+// Force dynamic rendering because this page uses cookies
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
   params: {
     id: string;

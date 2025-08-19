@@ -1,10 +1,15 @@
 /**
  * Performance Monitoring Service
- * 
+ *
  * This module provides functionality for tracking and logging performance metrics
  * in the browser. It focuses on key metrics like FPS, memory usage, stream loading
  * time, and UI responsiveness.
+ *
+ * NOTE: This module is designed to run only in the browser environment.
  */
+
+// Check if we're running in a browser environment
+const isBrowser = typeof window !== 'undefined';
 
 // Constants for performance thresholds
 const PERFORMANCE_THRESHOLDS = {
@@ -60,14 +65,14 @@ class FPSTracker {
   }
 
   start() {
-    if (this.enabled) return;
+    if (!isBrowser || this.enabled) return;
     this.enabled = true;
     this.track();
   }
 
   stop() {
     this.enabled = false;
-    if (this.rafId !== null) {
+    if (isBrowser && this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
@@ -99,7 +104,7 @@ class FPSTracker {
       }
     }
     
-    if (this.enabled) {
+    if (this.enabled && isBrowser) {
       this.rafId = requestAnimationFrame(() => this.track());
     }
   }
@@ -115,7 +120,7 @@ class MemoryTracker {
   }
   
   start() {
-    if (this.intervalId !== null) return;
+    if (!isBrowser || this.intervalId !== null) return;
     
     this.intervalId = window.setInterval(() => {
       this.trackMemory();
@@ -133,8 +138,8 @@ class MemoryTracker {
   }
   
   private trackMemory() {
-    // Check if performance.memory is available (Chrome only)
-    if (performance && (performance as any).memory) {
+    // Only run in browser and check if performance.memory is available (Chrome only)
+    if (isBrowser && performance && (performance as any).memory) {
       const memoryInfo = (performance as any).memory;
       const usedHeapSizeMB = Math.round(memoryInfo.usedJSHeapSize / (1024 * 1024));
       
@@ -159,10 +164,13 @@ class LoadTimeTracker {
   private loadTimes: Record<string, number> = {};
   
   startTiming(id: string) {
+    if (!isBrowser) return;
     this.loadTimes[id] = performance.now();
   }
   
   endTiming(id: string, context = 'Load Time') {
+    if (!isBrowser) return null;
+    
     if (this.loadTimes[id]) {
       const startTime = this.loadTimes[id];
       const endTime = performance.now();
@@ -190,10 +198,13 @@ class ResponsivenessTracker {
   private interactions: Record<string, number> = {};
   
   trackInteractionStart(id: string) {
+    if (!isBrowser) return;
     this.interactions[id] = performance.now();
   }
   
   trackInteractionEnd(id: string) {
+    if (!isBrowser) return null;
+    
     if (this.interactions[id]) {
       const startTime = this.interactions[id];
       const endTime = performance.now();
@@ -223,11 +234,15 @@ class PerformanceLogger {
   private summaryInterval: number | null = null;
   
   constructor() {
-    // Set up periodic summary logging
-    this.startSummaryLogging(60000); // Default to every minute
+    if (isBrowser) {
+      // Set up periodic summary logging
+      this.startSummaryLogging(60000); // Default to every minute
+    }
   }
   
   startSummaryLogging(intervalMs: number) {
+    if (!isBrowser) return;
+    
     if (this.summaryInterval !== null) {
       clearInterval(this.summaryInterval);
     }
@@ -443,7 +458,7 @@ export const performanceMonitor = {
   logMetric(metric: Omit<PerformanceMetrics, 'timestamp'>) {
     performanceLogger.logMetric({
       ...metric,
-      timestamp: performance.now()
+      timestamp: isBrowser ? performance.now() : Date.now()
     });
   },
   

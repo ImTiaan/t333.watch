@@ -4,6 +4,9 @@ import { twitchApi } from '@/lib/twitch-api';
 import { getUser, getTrendingPacks, createUser } from '@/lib/supabase';
 import PackGrid from '@/components/packs/PackGrid';
 
+// Force dynamic rendering because this page uses cookies
+export const dynamic = 'force-dynamic';
+
 async function getAuthenticatedUser() {
   try {
     // Get the access token from cookies

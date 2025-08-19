@@ -6,6 +6,9 @@ import { getUser, getUserPacks, createUser } from '@/lib/supabase';
 import PackGrid from '@/components/packs/PackGrid';
 import CreatePackButton from '@/components/packs/CreatePackButton';
 
+// Force dynamic rendering because this page uses cookies
+export const dynamic = 'force-dynamic';
+
 async function getAuthenticatedUser() {
   try {
     // Get the access token from cookies
