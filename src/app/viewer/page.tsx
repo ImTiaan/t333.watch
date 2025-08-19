@@ -299,7 +299,22 @@ function ViewerContent() {
         }
         
         try {
-          // Create embed options
+          // First get the token if authenticated
+          let authToken = null;
+          if (isAuthenticated) {
+            try {
+              authToken = await getAccessToken();
+              if (!authToken) {
+                console.warn('No auth token available despite being authenticated');
+              } else {
+                console.log(`Got auth token for ${stream.channel}: ${authToken.substring(0, 5)}...`);
+              }
+            } catch (error) {
+              console.error('Error getting access token:', error);
+            }
+          }
+          
+          // Create embed options with forced layout
           const embedOptions: any = {
             width: '100%',
             height: '100%',
@@ -309,31 +324,16 @@ function ViewerContent() {
             layout: 'video', // Use video-only layout (no chat)
             allowfullscreen: true,
             autoplay: true,
+            // Force a unique timestamp to prevent caching issues
+            time: Date.now().toString()
           };
           
-          // Add auth token if authenticated - this is critical for showing correct follow status
-          if (isAuthenticated) {
-            try {
-              // Get the access token - using await directly
-              const token = await getAccessToken();
-              
-              if (token) {
-                console.log(`Adding auth token for ${stream.channel}`);
-                
-                // Make sure we're using the correct format for auth
-                embedOptions.auth = {
-                  token: token,
-                  clientId: config.twitch.clientId
-                };
-                
-                // Add time parameter to force refresh of authentication
-                embedOptions.time = new Date().getTime().toString();
-              } else {
-                console.warn('No token available for authentication');
-              }
-            } catch (error) {
-              console.error('Error getting access token:', error);
-            }
+          // Add auth token if available
+          if (authToken) {
+            embedOptions.auth = {
+              token: authToken,
+              clientId: config.twitch.clientId
+            };
           }
           
           // Add type guard to ensure window.Twitch is defined
@@ -349,6 +349,13 @@ function ViewerContent() {
           embed.addEventListener('ready', () => {
             const player = embed.getPlayer();
             player.setMuted(stream.muted);
+            
+            // Log authentication status
+            if (isAuthenticated && authToken) {
+              console.log(`Player ready for ${stream.channel} with authentication`);
+            } else {
+              console.log(`Player ready for ${stream.channel} without authentication`);
+            }
           });
         } catch (error) {
           console.error('Error initializing Twitch embed:', error);

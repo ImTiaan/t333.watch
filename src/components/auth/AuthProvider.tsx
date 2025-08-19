@@ -213,12 +213,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const { clientId, redirectUri } = config.twitch;
     
-    // Define the scopes we need
+    // Define the scopes we need - ensure we have all necessary scopes
     const scopes = [
       'user:read:email',
       'user:read:follows',
       'channel:read:subscriptions',
+      'user:read:subscriptions',
+      'chat:read',
+      'chat:edit',
     ].join(' ');
+    
+    // Clear any existing tokens to ensure a fresh login
+    localStorage.removeItem('twitch_access_token');
+    Cookies.remove('twitch_access_token', { path: '/' });
     
     // Build the OAuth URL
     const authUrl = new URL('https://id.twitch.tv/oauth2/authorize');
@@ -226,11 +233,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authUrl.searchParams.append('redirect_uri', redirectUri);
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('scope', scopes);
+    authUrl.searchParams.append('force_verify', 'true'); // Force re-authentication
     
     // Generate a random state value for security
     const state = Math.random().toString(36).substring(2, 15);
     localStorage.setItem('twitch_auth_state', state);
     authUrl.searchParams.append('state', state);
+    
+    console.log('Redirecting to Twitch OAuth:', authUrl.toString());
     
     // Redirect to Twitch
     window.location.href = authUrl.toString();
@@ -256,10 +266,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const getAccessToken = async (): Promise<string | null> => {
     // First try to get the token from localStorage
     const token = localStorage.getItem('twitch_access_token');
-    if (token) return token;
+    if (token) {
+      console.log('Token found in localStorage');
+      // Also ensure it's in cookies for consistency
+      Cookies.set('twitch_access_token', token, {
+        expires: 7, // 7 days
+        path: '/',
+        sameSite: 'Lax'
+      });
+      return token;
+    }
     
     // If not in localStorage, try to get it from cookies
-    return Cookies.get('twitch_access_token') || null;
+    const cookieToken = Cookies.get('twitch_access_token');
+    if (cookieToken) {
+      console.log('Token found in cookies, syncing to localStorage');
+      // Sync back to localStorage for consistency
+      localStorage.setItem('twitch_access_token', cookieToken);
+      return cookieToken;
+    }
+    
+    console.warn('No token found in localStorage or cookies');
+    return null;
   };
 
   return (

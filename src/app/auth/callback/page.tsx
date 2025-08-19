@@ -69,8 +69,11 @@ function CallbackContent() {
           throw new Error(`Token exchange failed: ${errorData.message}`);
         }
 
-        const { access_token, expires_in } = await tokenResponse.json();
+        const tokenData = await tokenResponse.json();
+        const { access_token, expires_in } = tokenData;
 
+        console.log('Successfully obtained access token');
+        
         // Store the token in localStorage
         localStorage.setItem('twitch_access_token', access_token);
         
@@ -81,10 +84,23 @@ function CallbackContent() {
           sameSite: 'Lax'
         });
 
+        // Set the token in the Twitch API client
+        twitchApi.setAccessToken(access_token);
+        
+        try {
+          // Verify the token works by getting user info
+          const userInfo = await twitchApi.getUser();
+          console.log('Successfully verified token with user:', userInfo.display_name);
+        } catch (verifyError) {
+          console.error('Token verification failed:', verifyError);
+          // Continue anyway, the AuthProvider will handle this
+        }
+
         // We'll handle user creation in the AuthProvider component instead
         // This avoids potential errors during the callback process
 
         // Force a hard redirect to ensure the auth state is refreshed
+        console.log('Redirecting to dashboard...');
         window.location.href = '/dashboard';
       } catch (err) {
         console.error('Authentication callback error:', err);
