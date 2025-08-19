@@ -1,0 +1,17 @@
+/* Stream positioning styles */
+.stream-container {
+  position: relative;
+}
+
+.stream-item {
+  transition: all 0.3s ease;
+}
+
+.primary-position {
+  grid-area: primary !important;
+  z-index: 10;
+}
+
+.secondary-position {
+  z-index: 5;
+}

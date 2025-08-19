@@ -18,6 +18,7 @@ import StreamQualityManager, { StreamQuality } from '@/components/stream/StreamQ
 import PackMetadata from '@/components/seo/PackMetadata';
 import ShareModal from '@/components/packs/ShareModal';
 import analytics, { EventCategory, StreamEvents, PerformanceEvents } from '@/lib/analytics';
+import './styles.css'; // Import the CSS styles for stream positioning
 
 // Define the Twitch Embed type
 declare global {
