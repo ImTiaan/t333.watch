@@ -293,18 +293,24 @@ function ViewerContent() {
         streams.map(s => `${s.channel} (isPrimary: ${s.isPrimary}, playerId: ${s.playerId})`));
       
       for (const stream of streams) {
-        // Skip if embed already exists
+        // Check if the embed already exists
         if (embedRefs.current[stream.playerId]) {
-          console.log(`Embed for ${stream.channel} already exists, skipping initialization`);
+          console.log(`DEBUG: Embed for ${stream.channel} (${stream.playerId}) already exists, skipping initialization`);
           continue;
         }
         
         // Create container element if it doesn't exist
         let containerElement = document.getElementById(stream.playerId);
         if (!containerElement) {
-          console.log(`Container element for ${stream.channel} (${stream.playerId}) not found`);
+          console.error(`DEBUG: Container element for ${stream.channel} (${stream.playerId}) not found`);
+          console.log(`DEBUG: DOM elements currently in the page:`);
+          document.querySelectorAll('[id^="twitch-player-"]').forEach(el => {
+            console.log(`DEBUG: Found element with ID: ${el.id}`);
+          });
           continue;
         }
+        
+        console.log(`DEBUG: Found container element for ${stream.channel} (${stream.playerId}), creating embed`);
         
         try {
           // Create embed options with forced layout
@@ -424,6 +430,8 @@ function ViewerContent() {
     // Track interaction start
     performanceMonitor.trackInteractionStart('add-stream');
     
+    console.log(`DEBUG: addStream called with channel ${channelName || newChannel}`);
+    
     const channelToAdd = channelName || newChannel;
     if (!channelToAdd) {
       performanceMonitor.trackInteractionEnd('add-stream');
@@ -489,17 +497,14 @@ function ViewerContent() {
       }
     });
     
-    // Generate new playerIds for all existing streams to ensure consistency
-    const newStreams = streams.map((stream, i) => {
-      const newPlayerId = `twitch-player-${Date.now()}-${i}-${stream.channel}`;
-      return {
-        ...stream,
-        playerId: newPlayerId
-      };
-    });
+    // IMPORTANT CHANGE: Don't generate new playerIds for existing streams
+    // This was causing the black screen issue
+    // Instead, keep the existing streams as they are
+    const newStreams = [...streams];
     
-    // Generate a unique player ID for the new stream
+    // Generate a unique player ID for the new stream only
     const newPlayerId = `twitch-player-${Date.now()}-${newStreams.length}-${channelToAdd}`;
+    console.log(`DEBUG: Generated new player ID for ${channelToAdd}: ${newPlayerId}`);
     
     // Add the new stream
     const newStream: Stream = {
@@ -509,10 +514,8 @@ function ViewerContent() {
       playerId: newPlayerId,
       isPrimary: streams.length === 0, // First stream is primary by default
     };
-
-    // Don't clear embedRefs to avoid recreating players
-    // This is key to preserving playback state
-    // embedRefs.current = {};
+    
+    console.log(`DEBUG: Adding new stream: ${newStream.channel} (isPrimary: ${newStream.isPrimary})`);
     
     // Update the streams state with the new array plus the new stream
     setStreams([...newStreams, newStream]);
@@ -520,6 +523,7 @@ function ViewerContent() {
     
     // Set the active audio to the first stream if not already set
     if (activeAudioIndex === null && streams.length === 0) {
+      console.log(`DEBUG: Setting active audio index to 0 (first stream)`);
       setActiveAudioIndex(0);
     }
     
@@ -532,14 +536,18 @@ function ViewerContent() {
     // Track interaction start
     performanceMonitor.trackInteractionStart('remove-stream');
     
+    console.log(`DEBUG: removeStream called for stream ID ${id}`);
+    
     const index = streams.findIndex(stream => stream.id === id);
     if (index === -1) {
+      console.error(`DEBUG: Stream with id ${id} not found`);
       performanceMonitor.trackInteractionEnd('remove-stream');
       return;
     }
 
     // Get the channel name for logging
     const channelName = streams[index].channel;
+    console.log(`DEBUG: Removing stream ${channelName} at index ${index}`);
     
     // Track analytics event - remove stream
     analytics.trackStreamEvent(StreamEvents.REMOVE_STREAM, {
@@ -551,6 +559,7 @@ function ViewerContent() {
 
     // Check if we're removing the primary stream
     const isPrimaryRemoved = streams[index].isPrimary;
+    console.log(`DEBUG: Is primary stream being removed? ${isPrimaryRemoved}`);
 
     // Create a new array without the removed stream
     let newStreams = [...streams];
@@ -569,28 +578,23 @@ function ViewerContent() {
     // If the primary stream was removed and there are still streams,
     // set the first stream as primary
     if (isPrimaryRemoved && newStreams.length > 0) {
+      console.log(`DEBUG: Setting new primary stream to ${newStreams[0].channel}`);
       newStreams[0] = {
         ...newStreams[0],
         isPrimary: true
       };
     }
     
-    // Generate new playerIds for all remaining streams to force recreation
-    newStreams = newStreams.map((stream, i) => {
-      const newPlayerId = `twitch-player-${Date.now()}-${i}-${stream.channel}`;
-      return {
-        ...stream,
-        playerId: newPlayerId
-      };
-    });
-    
-    // Clear the embedRefs to force recreation of Twitch embed instances
-    embedRefs.current = {};
+    // IMPORTANT CHANGE: Don't generate new playerIds for all remaining streams
+    // This was causing the black screen issue
+    // Instead, keep the existing playerIds to maintain the connection to the DOM elements
     
     // Update active audio index if needed
     if (activeAudioIndex === index) {
+      console.log(`DEBUG: Updating active audio index from ${activeAudioIndex} to ${newStreams.length > 0 ? 0 : null}`);
       setActiveAudioIndex(newStreams.length > 0 ? 0 : null);
     } else if (activeAudioIndex !== null && activeAudioIndex > index) {
+      console.log(`DEBUG: Adjusting active audio index from ${activeAudioIndex} to ${activeAudioIndex - 1}`);
       setActiveAudioIndex(activeAudioIndex - 1);
     }
     
@@ -607,18 +611,39 @@ function ViewerContent() {
     // Track interaction start
     performanceMonitor.trackInteractionStart('set-primary-stream');
     
+    console.log(`DEBUG: setPrimaryStream called for stream ID ${id}`);
+    console.log(`DEBUG: Current streams:`, streams.map(s =>
+      `${s.channel} (id: ${s.id}, playerId: ${s.playerId}, isPrimary: ${s.isPrimary})`
+    ));
+    
     // Find the stream index
     const streamIndex = streams.findIndex(stream => stream.id === id);
     if (streamIndex === -1) {
+      console.error(`DEBUG: Stream with id ${id} not found`);
       performanceMonitor.trackInteractionEnd('set-primary-stream');
       return;
     }
+    
+    console.log(`DEBUG: Found stream at index ${streamIndex}: ${streams[streamIndex].channel}`);
     
     // Track analytics event
     analytics.trackStreamEvent(StreamEvents.SET_PRIMARY, {
       channel: streams[streamIndex].channel,
       streamCount: streams.length,
       isPremium: user?.premium_flag || false
+    });
+    
+    // Log DOM elements before update
+    console.log(`DEBUG: DOM elements before update:`);
+    streams.forEach(stream => {
+      const element = document.getElementById(stream.playerId);
+      console.log(`DEBUG: ${stream.channel} (${stream.playerId}): ${element ? 'exists' : 'missing'}`);
+    });
+    
+    // Log embed refs before update
+    console.log(`DEBUG: Embed refs before update:`);
+    Object.keys(embedRefs.current).forEach(playerId => {
+      console.log(`DEBUG: Embed for ${playerId}: ${embedRefs.current[playerId] ? 'exists' : 'missing'}`);
     });
     
     // First update the streams to mark the selected stream as primary
@@ -630,6 +655,10 @@ function ViewerContent() {
       // Explicitly keep the same playerId
       playerId: stream.playerId
     }));
+    
+    console.log(`DEBUG: New streams array:`, newStreams.map(s =>
+      `${s.channel} (id: ${s.id}, playerId: ${s.playerId}, isPrimary: ${s.isPrimary})`
+    ));
     
     // Update the streams state
     setStreams(newStreams);
@@ -646,8 +675,23 @@ function ViewerContent() {
     // After updating the primary stream, set the active audio
     // We do this last to ensure the UI has updated first
     setTimeout(() => {
+      console.log(`DEBUG: Setting active audio index to ${streamIndex}`);
+      
+      // Log DOM elements after update
+      console.log(`DEBUG: DOM elements after update:`);
+      newStreams.forEach(stream => {
+        const element = document.getElementById(stream.playerId);
+        console.log(`DEBUG: ${stream.channel} (${stream.playerId}): ${element ? 'exists' : 'missing'}`);
+      });
+      
+      // Log embed refs after update
+      console.log(`DEBUG: Embed refs after update:`);
+      Object.keys(embedRefs.current).forEach(playerId => {
+        console.log(`DEBUG: Embed for ${playerId}: ${embedRefs.current[playerId] ? 'exists' : 'missing'}`);
+      });
+      
       setActiveAudioIndex(streamIndex);
-    }, 50);
+    }, 100);
     
     performanceMonitor.trackInteractionEnd('set-primary-stream');
   };
@@ -843,9 +887,13 @@ function ViewerContent() {
                   className={`bg-black relative rounded overflow-hidden aspect-video ${isPrimary ? 'primary-stream' : 'secondary-stream'}`}
                   style={{ gridArea }}
                 >
+                  {/* IMPORTANT: This is the container for the Twitch embed */}
+                  {/* The ID must remain stable for the Twitch embed to work */}
                   <div
                     id={stream.playerId}
                     className="absolute inset-0 w-full h-full"
+                    data-channel={stream.channel}
+                    data-is-primary={isPrimary.toString()}
                   ></div>
                   
                   {/* Stream Controls Overlay */}
