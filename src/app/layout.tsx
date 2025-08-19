@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { NavigationTracker } from "@/components/analytics/NavigationTracker";
 import { config } from "@/lib/config";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -31,13 +33,16 @@ export default function RootLayout({
         className={`${inter.variable} bg-[#0e0e10] text-white antialiased`}
       >
         <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <AnalyticsProvider>
+            <NavigationTracker />
+            <div className="min-h-screen flex flex-col">
+              <Header />
+              <main className="flex-grow">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </AnalyticsProvider>
         </AuthProvider>
       </body>
     </html>

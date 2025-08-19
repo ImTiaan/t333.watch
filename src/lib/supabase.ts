@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { wrapSupabaseWithPerformanceTracking } from './supabasePerformance';
 
 // Types for our database tables
 export type Database = {
@@ -120,7 +121,12 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Create Supabase client
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+
+// Wrap with performance tracking in development mode
+export const supabase = process.env.NODE_ENV === 'development'
+  ? wrapSupabaseWithPerformanceTracking(supabaseClient)
+  : supabaseClient;
 
 // Helper functions for working with the database
 

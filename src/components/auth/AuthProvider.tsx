@@ -5,6 +5,7 @@ import { twitchApi } from '@/lib/twitch-api';
 import { config } from '@/lib/config';
 import { getUser, createUser } from '@/lib/supabase';
 import Cookies from 'js-cookie';
+import analytics, { EventCategory, AuthEvents } from '@/lib/analytics';
 
 // Define the user type
 export interface TwitchUser {
@@ -94,9 +95,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
         
+        // Track successful login/authentication
+        analytics.trackEvent(EventCategory.AUTH, AuthEvents.LOGIN, {
+          method: 'token_validation',
+          userId: userInfo.id,
+          username: userInfo.display_name,
+          isPremium: (userInfo as TwitchUser).premium_flag || false,
+          timestamp: new Date().toISOString()
+        });
+        
         setUser(userInfo);
       } catch (error) {
         console.error('Authentication error:', error);
+        
+        // Track authentication error
+        analytics.trackEvent(EventCategory.AUTH, AuthEvents.AUTH_ERROR, {
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+        
         // Clear invalid token
         localStorage.removeItem('twitch_access_token');
       } finally {
@@ -150,9 +167,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             }
             
+            // Track token refresh event
+            analytics.trackEvent(EventCategory.AUTH, AuthEvents.TOKEN_REFRESH, {
+              userId: userInfo.id,
+              username: userInfo.display_name,
+              isPremium: (userInfo as TwitchUser).premium_flag || false,
+              timestamp: new Date().toISOString()
+            });
+            
             setUser(userInfo);
           } catch (error) {
             console.error('Authentication error on focus:', error);
+            
+            // Track authentication error on focus
+            analytics.trackEvent(EventCategory.AUTH, AuthEvents.AUTH_ERROR, {
+              context: 'focus',
+              errorMessage: error instanceof Error ? error.message : 'Unknown error',
+              timestamp: new Date().toISOString()
+            });
+            
             localStorage.removeItem('twitch_access_token');
           }
         };
@@ -170,6 +203,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Login function - redirects to Twitch OAuth
   const login = () => {
+    // Track login attempt
+    analytics.trackEvent(EventCategory.AUTH, AuthEvents.LOGIN, {
+      method: 'twitch_oauth',
+      timestamp: new Date().toISOString()
+    });
+    
     const { clientId, redirectUri } = config.twitch;
     
     // Define the scopes we need
@@ -197,6 +236,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Logout function
   const logout = () => {
+    // Track logout event if user was logged in
+    if (user) {
+      analytics.trackEvent(EventCategory.AUTH, AuthEvents.LOGOUT, {
+        userId: user.id,
+        username: user.display_name,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     localStorage.removeItem('twitch_access_token');
     Cookies.remove('twitch_access_token', { path: '/' });
     setUser(null);

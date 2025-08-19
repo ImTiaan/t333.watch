@@ -1,0 +1,142 @@
+# Remaining Features from Phase 1 and 2
+
+This document outlines the features from Phase 1 and 2 of the t333.watch project plan that are not yet fully implemented, along with specific tasks needed to complete them.
+
+## Phase 1 Missing Features
+
+### 1. Performance Optimization (Increment 1.3)
+
+#### Performance Monitoring System
+- **Current Status**: Basic implementation exists but lacks comprehensive metrics
+- **Tasks to Complete**:
+  - [ ] Implement client-side performance metrics collection (FPS, memory usage, stream quality)
+  - [ ] Create a performance dashboard or logging system for monitoring
+  - [ ] Add performance data collection to identify bottlenecks
+  - [ ] Implement automatic quality adjustment based on performance metrics
+
+#### User Warnings for High Stream Counts
+- **Current Status**: Basic limits exist but lack clear user messaging
+- **Tasks to Complete**:
+  - [ ] Add clear warning UI when users approach performance limits
+  - [ ] Implement progressive degradation of stream quality as count increases
+  - [ ] Create informative tooltips explaining performance implications
+  - [ ] Add device-specific recommendations for optimal stream count
+
+### 2. Basic Packs System (Increment 1.4)
+
+#### URL-based Sharing for Packs
+- **Current Status**: Basic sharing exists but lacks polish and features
+- **Tasks to Complete**:
+  - [ ] Implement shareable links with proper metadata for social platforms
+  - [ ] Add copy-to-clipboard functionality with confirmation
+  - [ ] Create preview cards when links are shared on social media
+  - [ ] Add analytics to track shared links and their engagement
+
+## Phase 2 Missing Features
+
+### 1. Enhanced User Interface (Increment 2.1)
+
+#### Responsive Design for Mobile Devices
+- **Current Status**: Basic responsiveness exists but needs optimization for mobile
+- **Tasks to Complete**:
+  - [ ] Implement mobile-specific layouts for the stream grid
+  - [ ] Create touch-friendly controls for stream management
+  - [ ] Optimize navigation for smaller screens
+  - [ ] Add mobile-specific performance optimizations
+  - [ ] Test and fix issues on various mobile devices and browsers
+
+#### Twitch-native UI Polish
+- **Current Status**: Basic styling exists but lacks full Twitch-like experience
+- **Tasks to Complete**:
+  - [ ] Refine color scheme to match Twitch's design language
+  - [ ] Implement consistent hover states and animations
+  - [ ] Add Twitch-like loading states and transitions
+  - [ ] Improve typography and spacing to match Twitch's style
+  - [ ] Create consistent error states and messaging
+
+### 2. Premium Features Implementation (Increment 2.2)
+
+#### Advanced Layout Options for Premium Users
+- **Current Status**: Basic grid layouts exist but lack premium customization
+- **Tasks to Complete**:
+  - [ ] Implement custom grid layouts (drag and drop positioning)
+  - [ ] Add picture-in-picture mode for premium users
+  - [ ] Create preset layouts that users can select from
+  - [ ] Implement stream pinning/prioritization in layouts
+  - [ ] Add layout saving and loading functionality
+
+#### Premium User Verification System
+- **Current Status**: Basic premium flag exists but verification could be more robust
+- **Tasks to Complete**:
+  - [ ] Implement server-side verification for all premium features
+  - [ ] Add periodic subscription status checking
+  - [ ] Create graceful degradation when premium status expires
+  - [ ] Implement clear UI indicators for premium features
+  - [ ] Add premium status caching for performance
+
+### 3. Stripe Integration (Increment 2.3)
+
+#### Customer Portal for Managing Subscriptions
+- **Current Status**: Basic subscription creation works but management is limited
+- **Tasks to Complete**:
+  - [ ] Implement Stripe Customer Portal integration
+  - [ ] Create subscription management UI in user settings
+  - [ ] Add subscription history and receipt access
+  - [ ] Implement upgrade/downgrade flows
+  - [ ] Add cancellation flow with feedback collection
+
+#### Subscription Analytics Tracking
+- **Current Status**: Basic subscription status tracking exists but lacks analytics
+- **Tasks to Complete**:
+  - [ ] Implement subscription event tracking (creation, cancellation, etc.)
+  - [ ] Create admin dashboard for subscription metrics
+  - [ ] Add conversion funnel analytics
+  - [ ] Implement retention tracking for subscribers
+  - [ ] Create reporting system for subscription metrics
+
+### 4. Basic Discovery System (Increment 2.4)
+
+#### Public Packs Listing
+- **Current Status**: Minimal or no implementation
+- **Tasks to Complete**:
+  - [ ] Create public packs database schema and API
+  - [ ] Implement privacy controls for packs (public/private)
+  - [ ] Create UI for browsing public packs
+  - [ ] Add pagination and infinite scrolling for pack listings
+  - [ ] Implement featured/highlighted packs section
+
+#### Sorting Options
+- **Current Status**: Minimal or no implementation
+- **Tasks to Complete**:
+  - [ ] Implement sorting by creation date, popularity, etc.
+  - [ ] Create UI for sort selection
+  - [ ] Add server-side sorting for performance
+  - [ ] Implement sorting persistence in user preferences
+  - [ ] Add combination filtering and sorting
+
+#### Tagging System for Packs
+- **Current Status**: Minimal or no implementation
+- **Tasks to Complete**:
+  - [ ] Create tags database schema and API
+  - [ ] Implement tag selection UI for pack creation/editing
+  - [ ] Add tag-based filtering in discovery UI
+  - [ ] Create popular/trending tags display
+  - [ ] Implement tag suggestions based on pack content
+
+#### Search Functionality
+- **Current Status**: Minimal or no implementation
+- **Tasks to Complete**:
+  - [ ] Implement search API with proper indexing
+  - [ ] Create search UI with autocomplete
+  - [ ] Add search filters (by tag, creator, etc.)
+  - [ ] Implement search results ranking algorithm
+  - [ ] Add search history and suggestions
+
+#### View Count Tracking
+- **Current Status**: Minimal or no implementation
+- **Tasks to Complete**:
+  - [ ] Create view tracking database schema and API
+  - [ ] Implement view counting logic with duplicate prevention
+  - [ ] Add trending algorithm based on views and recency
+  - [ ] Create analytics dashboard for pack creators
+  - [ ] Implement view count display in pack cards

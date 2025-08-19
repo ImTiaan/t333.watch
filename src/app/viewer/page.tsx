@@ -11,6 +11,10 @@ import UpgradeModal from '@/components/premium/UpgradeModal';
 import StreamSidebar from '@/components/stream/StreamSidebar';
 import SidebarToggle from '@/components/stream/SidebarToggle';
 import { getGridTemplateStyles, getGridArea, getPlaceholderCount } from '@/lib/gridUtils';
+import performanceMonitor from '@/lib/performance';
+import StreamPerformanceTracker from '@/components/stream/StreamPerformanceTracker';
+import { StreamPerformanceWarning } from '@/components/ui/PerformanceWarning';
+import analytics, { EventCategory, StreamEvents } from '@/lib/analytics';
 
 // Define the Twitch Embed type
 declare global {
@@ -122,6 +126,29 @@ function ViewerContent() {
 
   // State to track if we're viewing a public pack
   const [isPublicPack, setIsPublicPack] = useState(false);
+  
+  // Initialize performance monitoring when component mounts
+  useEffect(() => {
+    // Start performance monitoring
+    performanceMonitor.start();
+    
+    // Log initial page load performance
+    performanceMonitor.logMetric({
+      context: 'Page Load',
+      details: {
+        page: 'viewer',
+        url: window.location.href
+      }
+    });
+    
+    // Configure summary logging interval (every 30 seconds)
+    performanceMonitor.configureSummaryInterval(30000);
+    
+    // Clean up when component unmounts
+    return () => {
+      performanceMonitor.stop();
+    };
+  }, []);
 
   // Check if the pack is public before requiring authentication
   useEffect(() => {
@@ -324,20 +351,50 @@ function ViewerContent() {
 
   // Add a new stream
   const addStream = (channelName?: string) => {
+    // Track interaction start
+    performanceMonitor.trackInteractionStart('add-stream');
+    
     const channelToAdd = channelName || newChannel;
-    if (!channelToAdd) return;
+    if (!channelToAdd) {
+      performanceMonitor.trackInteractionEnd('add-stream');
+      return;
+    }
+    
+    // Track analytics event - attempt to add stream
+    analytics.trackStreamEvent(StreamEvents.ADD_STREAM, {
+      channel: channelToAdd,
+      currentCount: streams.length,
+      isPremium: user?.premium_flag || false
+    });
     
     // Check if we've reached the absolute maximum streams
     const maxStreams = getMaxStreams(user);
     if (streams.length >= maxStreams) {
+      // Track max streams reached event
+      analytics.trackStreamEvent(StreamEvents.MAX_STREAMS_REACHED, {
+        maxStreams,
+        isPremium: user?.premium_flag || false,
+        attemptedChannel: channelToAdd
+      });
+      
       alert(`Maximum of ${maxStreams} streams reached. Please remove a stream before adding a new one.`);
+      performanceMonitor.trackInteractionEnd('add-stream');
       return;
     }
     
     // Check if we've reached the free tier limit and user is not premium
     if (!canAddMoreStreams(user, streams.length)) {
+      // Track premium feature prompt event
+      analytics.trackEvent(EventCategory.FEATURE, 'premium_feature_prompt', {
+        feature: 'additional_streams',
+        currentCount: streams.length,
+        maxFreeStreams: 3,
+        attemptedChannel: channelToAdd
+      });
+      
       // Show upgrade modal
       setIsUpgradeModalOpen(true);
+      performanceMonitor.trackInteractionEnd('add-stream');
       return;
     }
 
@@ -348,8 +405,19 @@ function ViewerContent() {
 
     if (isChannelAlreadyAdded) {
       alert(`Channel "${channelToAdd}" is already in your viewer.`);
+      performanceMonitor.trackInteractionEnd('add-stream');
       return;
     }
+    
+    // Log performance metric for stream count
+    performanceMonitor.logMetric({
+      context: 'Stream Count',
+      details: {
+        count: streams.length + 1,
+        action: 'add',
+        channel: channelToAdd
+      }
+    });
     
     // Generate new playerIds for all existing streams to ensure consistency
     const newStreams = streams.map((stream, i) => {
@@ -383,12 +451,32 @@ function ViewerContent() {
     if (activeAudioIndex === null && streams.length === 0) {
       setActiveAudioIndex(0);
     }
+    
+    // Track interaction end
+    performanceMonitor.trackInteractionEnd('add-stream');
   };
 
   // Remove a stream
   const removeStream = (id: string) => {
+    // Track interaction start
+    performanceMonitor.trackInteractionStart('remove-stream');
+    
     const index = streams.findIndex(stream => stream.id === id);
-    if (index === -1) return;
+    if (index === -1) {
+      performanceMonitor.trackInteractionEnd('remove-stream');
+      return;
+    }
+
+    // Get the channel name for logging
+    const channelName = streams[index].channel;
+    
+    // Track analytics event - remove stream
+    analytics.trackStreamEvent(StreamEvents.REMOVE_STREAM, {
+      channel: channelName,
+      streamIndex: index,
+      isPrimary: streams[index].isPrimary,
+      currentCount: streams.length
+    });
 
     // Check if we're removing the primary stream
     const isPrimaryRemoved = streams[index].isPrimary;
@@ -396,6 +484,16 @@ function ViewerContent() {
     // Create a new array without the removed stream
     let newStreams = [...streams];
     newStreams.splice(index, 1);
+    
+    // Log performance metric for stream count
+    performanceMonitor.logMetric({
+      context: 'Stream Count',
+      details: {
+        count: newStreams.length,
+        action: 'remove',
+        channel: channelName
+      }
+    });
     
     // If the primary stream was removed and there are still streams,
     // set the first stream as primary
@@ -427,19 +525,33 @@ function ViewerContent() {
     
     // Update the streams state
     setStreams(newStreams);
+    
+    // Track interaction end
+    performanceMonitor.trackInteractionEnd('remove-stream');
   };
 
 
   // Set a stream as primary and also set its audio as active
   const setPrimaryStream = (id: string) => {
+    // Track interaction start
+    performanceMonitor.trackInteractionStart('set-primary-stream');
+    
     console.log(`Setting stream ${id} as primary`);
     
     // Find the index of the stream we want to make primary
     const streamIndex = streams.findIndex(stream => stream.id === id);
     if (streamIndex === -1) {
       console.error(`Stream with id ${id} not found`);
+      performanceMonitor.trackInteractionEnd('set-primary-stream');
       return;
     }
+    
+    // Track analytics event - set primary stream
+    analytics.trackStreamEvent(StreamEvents.SET_PRIMARY, {
+      channel: streams[streamIndex].channel,
+      streamIndex,
+      totalStreams: streams.length
+    });
     
     // Find the stream we want to make primary
     const streamToMakePrimary = streams[streamIndex];
@@ -474,12 +586,25 @@ function ViewerContent() {
       `${s.channel}: isPrimary=${s.isPrimary}, muted=${s.muted}, playerId=${s.playerId}`
     ));
     
+    // Log performance metric for primary stream change
+    performanceMonitor.logMetric({
+      context: 'Primary Stream',
+      details: {
+        channel: streamToMakePrimary.channel,
+        previousPrimary: currentPrimaryIndex !== -1 ? streams[currentPrimaryIndex].channel : 'none',
+        streamCount: streams.length
+      }
+    });
+    
     // Clear the embedRefs to force recreation of Twitch embed instances
     embedRefs.current = {};
     
     // Update the streams state with the new array - single state update
     // that handles both primary status and audio changes
     setStreams(newStreams);
+    
+    // Track interaction end
+    performanceMonitor.trackInteractionEnd('set-primary-stream');
   };
 
   // Reference to store Twitch embed instances
@@ -487,10 +612,37 @@ function ViewerContent() {
 
   // Set active audio by controlling the Twitch player
   const setActiveAudio = (index: number) => {
-    if (index < 0 || index >= streams.length) return;
+    // Track interaction start
+    performanceMonitor.trackInteractionStart('set-active-audio');
+    
+    if (index < 0 || index >= streams.length) {
+      performanceMonitor.trackInteractionEnd('set-active-audio');
+      return;
+    }
+    
+    // Get the channel name for logging
+    const channelName = streams[index].channel;
     
     // Update active audio index
     setActiveAudioIndex(index);
+    
+    // Track analytics event - change active audio
+    analytics.trackStreamEvent(StreamEvents.CHANGE_AUDIO, {
+      channel: channelName,
+      streamIndex: index,
+      isPrimary: streams[index].isPrimary || false,
+      totalStreams: streams.length
+    });
+    
+    // Log performance metric for audio change
+    performanceMonitor.logMetric({
+      context: 'Audio Change',
+      details: {
+        channel: channelName,
+        streamIndex: index,
+        streamCount: streams.length
+      }
+    });
     
     // We don't need to regenerate playerIds here since we're just changing audio
     // and not repositioning streams in the grid
@@ -516,6 +668,9 @@ function ViewerContent() {
     ));
     
     setStreams(newStreams);
+    
+    // Track interaction end
+    performanceMonitor.trackInteractionEnd('set-active-audio');
   };
 
   // Show loading state while checking authentication or loading pack
@@ -646,6 +801,14 @@ function ViewerContent() {
                       Primary
                     </div>
                   )}
+                  
+                  {/* Stream Performance Tracker (invisible component) */}
+                  <StreamPerformanceTracker
+                    streamId={stream.id}
+                    playerId={stream.playerId}
+                    embed={embedRefs.current[stream.playerId]}
+                    isVisible={true}
+                  />
                 </div>
               );
             })}
@@ -735,6 +898,12 @@ function ViewerContent() {
           </button>
         </div>
       )}
+      
+      {/* Performance Warning for Stream Count */}
+      <StreamPerformanceWarning
+        streamCount={streams.length}
+        isPremium={user?.premium_flag || false}
+      />
       
       {/* Upgrade Modal */}
       <UpgradeModal
