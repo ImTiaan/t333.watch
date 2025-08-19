@@ -1,13 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { config } from '@/lib/config';
 import { createUser, getUser } from '@/lib/supabase';
 import { twitchApi } from '@/lib/twitch-api';
 import Cookies from 'js-cookie';
 
-export default function AuthCallback() {
+// Loading component to display while the callback is processing
+function CallbackLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0e0e10]">
+      <div className="bg-[#18181b] p-8 rounded-lg border border-[#2d2d3a] max-w-md w-full text-center">
+        <h1 className="text-2xl font-bold text-white mb-4">Logging you in...</h1>
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9146FF]"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Callback component that uses searchParams
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -107,5 +122,14 @@ export default function AuthCallback() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main export component that wraps CallbackContent in a Suspense boundary
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={<CallbackLoading />}>
+      <CallbackContent />
+    </Suspense>
   );
 }
