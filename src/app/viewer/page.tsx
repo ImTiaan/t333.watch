@@ -382,15 +382,28 @@ function ViewerContent() {
       // Apply audio settings - but don't call setActiveAudio which would cause an infinite loop
       if (activeAudioIndex !== null) {
         // Just update the players directly without changing state
-        streams.forEach((stream, i) => {
-          const embed = embedRefs.current[stream.playerId];
-          if (embed && embed.getPlayer) {
-            const player = embed.getPlayer();
-            if (player) {
-              player.setMuted(i !== activeAudioIndex);
+        // We need to do this with a slight delay to ensure the DOM is ready
+        setTimeout(() => {
+          streams.forEach((stream, i) => {
+            const embed = embedRefs.current[stream.playerId];
+            if (embed && embed.getPlayer) {
+              const player = embed.getPlayer();
+              if (player) {
+                try {
+                  // Set muted state based on activeAudioIndex
+                  player.setMuted(i !== activeAudioIndex);
+                  
+                  // If this is the active audio stream, ensure it's playing
+                  if (i === activeAudioIndex) {
+                    player.play();
+                  }
+                } catch (error) {
+                  console.error(`Error updating audio for ${stream.channel}:`, error);
+                }
+              }
             }
-          }
-        });
+          });
+        }, 100);
       }
     }
     
@@ -594,72 +607,48 @@ function ViewerContent() {
     // Track interaction start
     performanceMonitor.trackInteractionStart('set-primary-stream');
     
-    console.log(`Setting stream ${id} as primary`);
-    
-    // Find the index of the stream we want to make primary
+    // Find the stream index
     const streamIndex = streams.findIndex(stream => stream.id === id);
     if (streamIndex === -1) {
-      console.error(`Stream with id ${id} not found`);
       performanceMonitor.trackInteractionEnd('set-primary-stream');
       return;
     }
     
-    // Track analytics event - set primary stream
+    // Track analytics event
     analytics.trackStreamEvent(StreamEvents.SET_PRIMARY, {
       channel: streams[streamIndex].channel,
-      streamIndex,
-      totalStreams: streams.length
+      streamCount: streams.length,
+      isPremium: user?.premium_flag || false
     });
     
-    // Find the stream we want to make primary
-    const streamToMakePrimary = streams[streamIndex];
-    console.log(`Making stream ${streamToMakePrimary.channel} primary`);
+    // First update the streams to mark the selected stream as primary
+    // This is important to do before changing audio to avoid race conditions
+    // Keep the same playerIds to maintain the connection to the DOM elements
+    const newStreams = streams.map((stream, i) => ({
+      ...stream,
+      isPrimary: i === streamIndex,
+      // Explicitly keep the same playerId
+      playerId: stream.playerId
+    }));
     
-    // Find the current primary stream index
-    const currentPrimaryIndex = streams.findIndex(stream => stream.isPrimary);
+    // Update the streams state
+    setStreams(newStreams);
     
-    // Determine which stream should have active audio (the new primary stream)
-    const audioIndex = streamIndex;
-    
-    // Save the current set of playing streams before making changes
-    const playingStreamIds = new Set(playingStreamsRef.current);
-    console.log(`Currently playing streams: ${Array.from(playingStreamIds).join(', ')}`);
-    
-    // Create a new array with updated isPrimary flags only
-    // Don't update muted flags here - we'll handle audio separately
-    // Keep the same playerIds to avoid recreating the embeds
-    const newStreams = streams.map((stream, i) => {
-      return {
-        ...stream,
-        // Update isPrimary flag - only the selected stream is primary
-        isPrimary: i === streamIndex
-      };
-    });
-    
-    // Log the updated streams array
-    console.log('Updated streams array:', newStreams.map(s =>
-      `${s.channel}: isPrimary=${s.isPrimary}, muted=${s.muted}, playerId=${s.playerId}`
-    ));
-    
-    // Log performance metric for primary stream change
+    // Log performance metric
     performanceMonitor.logMetric({
       context: 'Primary Stream',
       details: {
-        channel: streamToMakePrimary.channel,
-        previousPrimary: currentPrimaryIndex !== -1 ? streams[currentPrimaryIndex].channel : 'none',
-        streamCount: streams.length
+        action: 'set',
+        channel: streams[streamIndex].channel
       }
     });
     
-    // First update the streams state with the new array
-    // This ensures the UI reflects the new primary stream immediately
-    setStreams(newStreams);
+    // After updating the primary stream, set the active audio
+    // We do this last to ensure the UI has updated first
+    setTimeout(() => {
+      setActiveAudioIndex(streamIndex);
+    }, 50);
     
-    // Then update the active audio index
-    // This will trigger the setActiveAudio effect which will handle the audio changes
-    setActiveAudioIndex(audioIndex);
-    
-    // Track interaction end
     performanceMonitor.trackInteractionEnd('set-primary-stream');
   };
 
@@ -696,68 +685,20 @@ function ViewerContent() {
       }
     });
     
-    // Save the current set of playing streams before making changes
-    const playingStreamIds = new Set(playingStreamsRef.current);
-    console.log(`Currently playing streams: ${Array.from(playingStreamIds).join(', ')}`);
-    
     // Create a new array with updated muted flags, but preserve isPrimary flags
+    // Keep the same playerIds to maintain the connection to the DOM elements
     const newStreams = streams.map((stream, i) => ({
       ...stream,
       muted: i !== index,
+      // Explicitly keep the same playerId
+      playerId: stream.playerId
     }));
     
-    // Update the active audio index first
+    // Update the active audio index
     setActiveAudioIndex(index);
     
     // Update the streams state with the new array
     setStreams(newStreams);
-    
-    // Update the actual players if they exist
-    // This is the key part - we update the players directly without recreating them
-    // We do this AFTER updating state to ensure React has a chance to render
-    // This helps avoid the black screen issue
-    setTimeout(() => {
-      Object.keys(embedRefs.current).forEach(playerId => {
-        const embed = embedRefs.current[playerId];
-        if (embed && embed.getPlayer) {
-          const player = embed.getPlayer();
-          if (player) {
-            // Find which stream this player belongs to
-            const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
-            if (streamIndex !== -1) {
-              // For the stream that should have audio, handle it differently
-              if (streamIndex === index) {
-                // First set muted state
-                player.setMuted(false);
-                
-                // If this stream was playing before, make sure it continues playing
-                if (playingStreamIds.has(playerId)) {
-                  try {
-                    console.log(`Ensuring stream ${newStreams[streamIndex].channel} continues playing`);
-                    player.play();
-                  } catch (error) {
-                    console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
-                  }
-                }
-              } else {
-                // For other streams, just mute them
-                player.setMuted(true);
-                
-                // If this stream was playing before, make sure it continues playing
-                if (playingStreamIds.has(playerId)) {
-                  try {
-                    // For muted streams, autoplay is always allowed
-                    player.play();
-                  } catch (error) {
-                    console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
-                  }
-                }
-              }
-            }
-          }
-        }
-      });
-    }, 50); // Short delay to ensure React has updated the DOM
     
     // Track interaction end
     performanceMonitor.trackInteractionEnd('set-active-audio');
