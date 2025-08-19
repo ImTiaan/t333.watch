@@ -496,8 +496,9 @@ function ViewerContent() {
       isPrimary: streams.length === 0, // First stream is primary by default
     };
 
-    // Clear the embedRefs to force recreation of Twitch embed instances
-    embedRefs.current = {};
+    // Don't clear embedRefs to avoid recreating players
+    // This is key to preserving playback state
+    // embedRefs.current = {};
     
     // Update the streams state with the new array plus the new stream
     setStreams([...newStreams, newStream]);
