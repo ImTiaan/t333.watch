@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     // Disable TypeScript type checking during production builds
     ignoreBuildErrors: true,
   },
+  // Disable static generation for all pages
+  output: 'standalone',
 };
 
 export default nextConfig;

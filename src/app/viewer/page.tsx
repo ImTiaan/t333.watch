@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -93,7 +93,22 @@ function getGridTemplateClass(streamCount: number): string {
   }
 }
 
-export default function Viewer() {
+// Loading component to display while the viewer is loading
+function ViewerLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0e0e10]">
+      <div className="bg-[#18181b] p-8 rounded-lg border border-[#2d2d3a] max-w-md w-full text-center">
+        <h1 className="text-2xl font-bold text-white mb-4">Loading streams...</h1>
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#9146FF]"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Viewer content component that uses searchParams
+function ViewerContent() {
   const { isAuthenticated, isLoading, user, getAccessToken } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -727,5 +742,14 @@ export default function Viewer() {
         onClose={() => setIsUpgradeModalOpen(false)}
       />
     </div>
+  );
+}
+
+// Main export component that wraps ViewerContent in a Suspense boundary
+export default function Viewer() {
+  return (
+    <Suspense fallback={<ViewerLoading />}>
+      <ViewerContent />
+    </Suspense>
   );
 }
