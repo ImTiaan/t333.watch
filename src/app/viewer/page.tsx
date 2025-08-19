@@ -16,6 +16,7 @@ import StreamPerformanceTracker from '@/components/stream/StreamPerformanceTrack
 import { StreamPerformanceWarning } from '@/components/ui/PerformanceWarning';
 import StreamQualityManager, { StreamQuality } from '@/components/stream/StreamQualityManager';
 import PackMetadata from '@/components/seo/PackMetadata';
+import ShareModal from '@/components/packs/ShareModal';
 import analytics, { EventCategory, StreamEvents, PerformanceEvents } from '@/lib/analytics';
 
 // Define the Twitch Embed type
@@ -128,9 +129,12 @@ function ViewerContent() {
   const [currentQuality, setCurrentQuality] = useState<StreamQuality>('auto');
   const [packDescription, setPackDescription] = useState<string | null>(null);
   const [streamChannels, setStreamChannels] = useState<string[]>([]);
+// State to track if we're viewing a public pack
+const [isPublicPack, setIsPublicPack] = useState(false);
 
-  // State to track if we're viewing a public pack
-  const [isPublicPack, setIsPublicPack] = useState(false);
+// State to control the share modal
+const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
   
   // Initialize performance monitoring when component mounts
   useEffect(() => {
@@ -883,6 +887,7 @@ function ViewerContent() {
         
         {/* Share Button */}
         <button
+          onClick={() => setIsShareModalOpen(true)}
           className="bg-[#9146FF] text-white p-3 rounded-full shadow-lg hover:bg-[#7a2df0] transition-colors"
           title="Share"
         >
@@ -948,6 +953,16 @@ function ViewerContent() {
       <UpgradeModal
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
+      />
+      
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        packId={searchParams.get('pack') || undefined}
+        packTitle={packTitle || 'Twitch Stream Pack'}
+        packDescription={packDescription || 'Watch multiple Twitch streams simultaneously'}
+        streams={streams.map(s => s.channel)}
       />
     </div>
   );
