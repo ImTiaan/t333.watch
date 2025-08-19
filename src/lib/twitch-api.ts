@@ -119,6 +119,55 @@ export class TwitchAPI {
   }
 
   /**
+   * Get all channels that the user follows (not just live ones)
+   */
+  async getFollowedChannels() {
+    if (!this.accessToken) {
+      throw new Error('Access token required for this operation');
+    }
+
+    const user = await this.getUser();
+    
+    const response = await this.request<{
+      data: Array<{
+        broadcaster_id: string;
+        broadcaster_login: string;
+        broadcaster_name: string;
+        followed_at: string;
+      }>;
+      pagination: {
+        cursor?: string;
+      };
+    }>(`users/follows?from_id=${user.id}&first=100`);
+
+    // Transform the data to match our Channel interface
+    const channels = await Promise.all(
+      response.data.map(async (follow) => {
+        // Get the channel's profile image
+        const userResponse = await this.request<{
+          data: Array<{
+            id: string;
+            login: string;
+            display_name: string;
+            profile_image_url: string;
+          }>;
+        }>(`users?id=${follow.broadcaster_id}`);
+
+        const userData = userResponse.data[0];
+        
+        return {
+          id: follow.broadcaster_id,
+          login: follow.broadcaster_login,
+          display_name: follow.broadcaster_name,
+          profile_image_url: userData?.profile_image_url || ''
+        };
+      })
+    );
+
+    return channels;
+  }
+
+  /**
    * Get information about specific streams
    */
   async getStreams(userIds: string[]) {

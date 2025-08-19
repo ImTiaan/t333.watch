@@ -26,6 +26,17 @@ export default function ChannelSelector({ onChannelSelect }: ChannelSelectorProp
     const fetchFollowedChannels = async () => {
       try {
         setIsLoading(true);
+        
+        // Try to get all followed channels first
+        try {
+          const channels = await twitchApi.getFollowedChannels();
+          setFollowedChannels(channels);
+          return;
+        } catch (error) {
+          console.error('Error fetching all followed channels, falling back to live streams:', error);
+        }
+        
+        // Fallback to just live streams if getting all followed channels fails
         const streams = await twitchApi.getFollowedStreams();
         
         // Extract unique channels from streams
