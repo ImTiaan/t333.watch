@@ -38,7 +38,7 @@ export function getGridTemplateStyles(streamCount: number): {
           "primary primary secondary1"
           "primary primary secondary2"
         `,
-        gridTemplateColumns: '2fr 2fr 1fr',
+        gridTemplateColumns: '3fr 3fr 2fr',
         gridTemplateRows: '1fr 1fr',
       };
     case 4:

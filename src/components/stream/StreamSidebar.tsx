@@ -25,8 +25,8 @@ export default function StreamSidebar({ isOpen, onToggle, onAddStream }: StreamS
   };
 
   return (
-    <div 
-      className={`fixed top-0 right-0 h-full w-80 bg-[#18181b] shadow-lg transform transition-transform duration-300 ease-in-out z-20 ${
+    <div
+      className={`fixed top-16 right-0 h-[calc(100%-80px)] w-80 bg-[#18181b] shadow-lg transform transition-transform duration-300 ease-in-out z-20 ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
     >

@@ -832,12 +832,7 @@ const [isShareModalOpen, setIsShareModalOpen] = useState(false);
                     </div>
                   </div>
                   
-                  {/* Primary Stream Indicator */}
-                  {isPrimary && (
-                    <div className="absolute top-2 left-2 bg-[#9146FF] text-white text-xs px-2 py-1 rounded-full">
-                      Primary
-                    </div>
-                  )}
+                  {/* Primary Stream is indicated by the purple border */}
                   
                   {/* Stream Performance Tracker (invisible component) */}
                   <StreamPerformanceTracker
