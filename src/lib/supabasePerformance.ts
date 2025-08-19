@@ -1,12 +1,15 @@
 /**
  * Supabase Performance Tracking
- * 
+ *
  * This module extends the Supabase client to track query performance.
  * It wraps Supabase methods to measure execution time and log performance metrics.
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import analytics, { EventCategory, PerformanceEvents } from '@/lib/analytics';
+
+// Check if we're running in a browser environment
+const isBrowser = typeof window !== 'undefined';
 
 // Constants for performance thresholds
 const PERFORMANCE_THRESHOLDS = {
@@ -113,7 +116,7 @@ export function createPerformanceTrackingSupabase(supabase: SupabaseClient): Sup
               // If the property is a query method, wrap it to measure performance
               if (['select', 'insert', 'update', 'delete', 'upsert'].includes(qbProp)) {
                 return function(...qbArgs: any[]) {
-                  const startTime = performance.now();
+                  const startTime = isBrowser ? performance.now() : Date.now();
                   const query = `${qbProp}(${qbArgs.map(a => JSON.stringify(a)).join(', ')})`;
                   
                   // Execute the original method
@@ -122,11 +125,11 @@ export function createPerformanceTrackingSupabase(supabase: SupabaseClient): Sup
                   // For methods that return a promise
                   if (result && typeof result.then === 'function') {
                     return result.then((data: any) => {
-                      const duration = performance.now() - startTime;
+                      const duration = (isBrowser ? performance.now() : Date.now()) - startTime;
                       logQueryPerformance(qbProp, table, duration, query, { args: qbArgs, result: data });
                       return data;
                     }).catch((error: any) => {
-                      const duration = performance.now() - startTime;
+                      const duration = (isBrowser ? performance.now() : Date.now()) - startTime;
                       console.error(
                         `%c[DB ERROR] ${qbProp} ${table} (${duration.toFixed(2)}ms)`,
                         'color: red; font-weight: bold',
@@ -148,7 +151,7 @@ export function createPerformanceTrackingSupabase(supabase: SupabaseClient): Sup
                   }
                   
                   // For methods that don't return a promise
-                  const duration = performance.now() - startTime;
+                  const duration = (isBrowser ? performance.now() : Date.now()) - startTime;
                   logQueryPerformance(qbProp, table, duration, query, { args: qbArgs, result });
                   return result;
                 };
