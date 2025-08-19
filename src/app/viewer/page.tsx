@@ -135,6 +135,9 @@ function ViewerContent() {
   // State to control the share modal
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   
+  // Track if we need to show play buttons due to autoplay blocking
+  const [playbackBlockedStreams, setPlaybackBlockedStreams] = useState<Set<string>>(new Set());
+  
   // Reference to store Twitch embed instances
   const embedRefs = useRef<Record<string, any>>({});
   
@@ -728,6 +731,9 @@ function ViewerContent() {
       muted: i !== index,
     }));
     
+    // Track if we need to show play buttons due to autoplay blocking
+    const [playbackBlockedStreams, setPlaybackBlockedStreams] = useState<Set<string>>(new Set());
+    
     // Update the actual players if they exist
     // This is the key part - we update the players directly without recreating them
     Object.keys(embedRefs.current).forEach(playerId => {
@@ -738,20 +744,57 @@ function ViewerContent() {
           // Find which stream this player belongs to
           const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
           if (streamIndex !== -1) {
-            // Update muted state
-            player.setMuted(streamIndex !== index);
-            
-            // If this stream was playing before, make sure it continues playing
-            if (playingStreamIds.has(playerId)) {
-              // Use setTimeout to ensure this happens after the muted state is updated
-              setTimeout(() => {
+            // For the stream that should have audio, handle it differently
+            if (streamIndex === index) {
+              // First mute it (this always works)
+              player.setMuted(false);
+              
+              // If this stream was playing before, make sure it continues playing
+              if (playingStreamIds.has(playerId)) {
+                // Use Promise to handle autoplay blocking (Chrome)
                 try {
                   console.log(`Ensuring stream ${newStreams[streamIndex].channel} continues playing`);
+                  const playPromise = player.play();
+                  
+                  // Handle the Promise if it exists (modern browsers)
+                  if (playPromise !== undefined) {
+                    playPromise
+                      .then(() => {
+                        // Playback started successfully
+                        console.log(`Stream ${newStreams[streamIndex].channel} playing successfully`);
+                        // Remove from blocked streams if it was there
+                        if (playbackBlockedStreams.has(playerId)) {
+                          const newBlockedStreams = new Set(playbackBlockedStreams);
+                          newBlockedStreams.delete(playerId);
+                          setPlaybackBlockedStreams(newBlockedStreams);
+                        }
+                      })
+                      .catch((error: Error) => {
+                        // Autoplay was prevented (likely Chrome's policy)
+                        console.error(`Autoplay blocked for ${newStreams[streamIndex].channel}:`, error);
+                        // Add to blocked streams to show play button
+                        const newBlockedStreams = new Set(playbackBlockedStreams);
+                        newBlockedStreams.add(playerId);
+                        setPlaybackBlockedStreams(newBlockedStreams);
+                      });
+                  }
+                } catch (error) {
+                  console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
+                }
+              }
+            } else {
+              // For other streams, just mute them
+              player.setMuted(true);
+              
+              // If this stream was playing before, make sure it continues playing
+              if (playingStreamIds.has(playerId)) {
+                try {
+                  // For muted streams, autoplay is always allowed
                   player.play();
                 } catch (error) {
                   console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
                 }
-              }, 100);
+              }
             }
           }
         }
