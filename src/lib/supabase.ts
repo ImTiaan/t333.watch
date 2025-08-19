@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { wrapSupabaseWithPerformanceTracking } from './supabasePerformance';
+import { twitchApi } from './twitch-api';
 
 // Types for our database tables
 export type Database = {
@@ -12,6 +13,7 @@ export type Database = {
           display_name: string;
           premium_flag: boolean;
           stripe_customer_id: string | null;
+          profile_image_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -21,6 +23,7 @@ export type Database = {
           display_name: string;
           premium_flag?: boolean;
           stripe_customer_id?: string | null;
+          profile_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -30,6 +33,7 @@ export type Database = {
           display_name?: string;
           premium_flag?: boolean;
           stripe_customer_id?: string | null;
+          profile_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -143,6 +147,18 @@ export async function getUser(twitchId: string) {
 }
 
 export async function createUser(userData: Database['public']['Tables']['users']['Insert']) {
+  // Add profile_image_url to the user data if it's not already included
+  if (!userData.profile_image_url && userData.twitch_id) {
+    try {
+      // We can't get the profile image directly without a token
+      // The profile image will be updated when the user logs in
+      // and we have their access token
+      console.log('Profile image will be updated on next login');
+    } catch (error) {
+      console.error('Error handling profile image:', error);
+    }
+  }
+
   const { data, error } = await supabase
     .from('users')
     .insert(userData)
@@ -249,13 +265,81 @@ export async function removeStreamFromPack(id: string) {
   return true;
 }
 
+// Get public packs with sorting options
+export async function getPublicPacks(
+  options: {
+    sort?: 'newest' | 'oldest' | 'popular' | 'alphabetical';
+    limit?: number;
+    offset?: number;
+    tag?: string;
+    search?: string;
+  } = {}
+) {
+  const {
+    sort = 'newest',
+    limit = 20,
+    offset = 0,
+    tag,
+    search,
+  } = options;
+  
+  let query = supabase
+    .from('packs')
+    .select(`
+      *,
+      pack_streams(*),
+      owner:users!packs_owner_id_fkey(
+        display_name
+      )
+    `)
+    .eq('visibility', 'public')
+    .range(offset, offset + limit - 1);
+  
+  // Apply sorting
+  switch (sort) {
+    case 'newest':
+      query = query.order('created_at', { ascending: false });
+      break;
+    case 'oldest':
+      query = query.order('created_at', { ascending: true });
+      break;
+    case 'popular':
+      // For now, we'll just sort by created_at as a placeholder
+      // In the future, this would be based on view count or other popularity metrics
+      query = query.order('created_at', { ascending: false });
+      break;
+    case 'alphabetical':
+      query = query.order('title', { ascending: true });
+      break;
+  }
+  
+  // Apply tag filter if provided
+  if (tag) {
+    query = query.contains('tags', [tag]);
+  }
+  
+  // Apply search filter if provided
+  if (search) {
+    // Search in both title and tags
+    query = query.or(`title.ilike.%${search}%,tags.cs.{${search}}`);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) throw error;
+  return data;
+}
+
 // Trending Packs
 export async function getTrendingPacks(limit = 10) {
   const { data, error } = await supabase
     .from('packs')
     .select(`
       *,
-      pack_streams(*)
+      pack_streams(*),
+      owner:users!packs_owner_id_fkey(
+        display_name
+      )
     `)
     .eq('visibility', 'public')
     .order('created_at', { ascending: false })

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
+import VisibilityToggle from './VisibilityToggle';
 
 interface PackFormProps {
   initialData?: {
@@ -195,33 +196,11 @@ export default function PackForm({ initialData, onSuccess, onCancel }: PackFormP
         <label className="block text-sm font-medium text-white mb-1">
           Visibility
         </label>
-        <div className="flex gap-4">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="visibility"
-              value="public"
-              checked={visibility === 'public'}
-              onChange={() => setVisibility('public')}
-              className="mr-2"
-            />
-            <span>Public</span>
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="visibility"
-              value="private"
-              checked={visibility === 'private'}
-              onChange={() => setVisibility('private')}
-              className="mr-2"
-            />
-            <span>Private</span>
-          </label>
-        </div>
-        <p className="text-xs text-gray-400 mt-1">
-          Public packs can be discovered by other users. Private packs are only visible to you.
-        </p>
+        <VisibilityToggle
+          packId={initialData?.id || ''}
+          initialVisibility={visibility}
+          onVisibilityChange={(newVisibility) => setVisibility(newVisibility)}
+        />
       </div>
       
       {/* Form actions */}

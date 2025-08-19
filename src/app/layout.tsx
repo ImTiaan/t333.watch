@@ -20,10 +20,14 @@ export function generateMetadata(): Metadata {
     keywords: "Twitch, multi-stream, stream viewer, roleplay, esports, IRL, collaborations",
     icons: {
       icon: [
-        { url: '/t3logo.png', type: 'image/png' },
+        { url: '/t3logo.png', type: 'image/png', sizes: '32x32' },
+        { url: '/t3logo.png', type: 'image/png', sizes: '16x16' },
+      ],
+      shortcut: [
+        { url: '/t3logo.png', type: 'image/png' }
       ],
       apple: [
-        { url: '/t3logo.png', type: 'image/png' },
+        { url: '/t3logo.png', type: 'image/png', sizes: '180x180' },
       ],
     },
     openGraph: {
