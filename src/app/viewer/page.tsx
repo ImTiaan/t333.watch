@@ -264,8 +264,9 @@ function ViewerContent() {
     console.log("Initializing Twitch embeds with streams:", streams.map(s => `${s.channel} (isPrimary: ${s.isPrimary})`));
     console.log("Authentication state:", isAuthenticated ? "Authenticated" : "Not authenticated");
     
-    // Clear existing embeds to force recreation with new auth state
-    embedRefs.current = {};
+    // Don't clear existing embeds to preserve playback state
+    // This is key to maintaining the user gesture token for Chrome's autoplay policy
+    // embedRefs.current = {};
     
     // Load the Twitch embed script if not already loaded
     if (!document.getElementById('twitch-embed-script')) {
