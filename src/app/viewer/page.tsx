@@ -252,9 +252,13 @@ function ViewerContent() {
   // We're removing the automatic click handler as it was causing infinite loops
   // Instead, we'll rely on the manual "Start All Streams" button
 
-  // Initialize Twitch embeds when streams change
+  // Initialize Twitch embeds when streams change or authentication state changes
   useEffect(() => {
     console.log("Initializing Twitch embeds with streams:", streams.map(s => `${s.channel} (isPrimary: ${s.isPrimary})`));
+    console.log("Authentication state:", isAuthenticated ? "Authenticated" : "Not authenticated");
+    
+    // Clear existing embeds to force recreation with new auth state
+    embedRefs.current = {};
     
     // Load the Twitch embed script if not already loaded
     if (!document.getElementById('twitch-embed-script')) {
@@ -302,25 +306,33 @@ function ViewerContent() {
             channel: stream.channel,
             parent: [window.location.hostname],
             muted: stream.muted,
-            layout: 'video-with-chat', // Change to video-with-chat to show follow button
+            layout: 'video', // Use video-only layout (no chat)
             allowfullscreen: true,
             autoplay: true,
           };
           
-          // Add auth token if authenticated
+          // Add auth token if authenticated - this is critical for showing correct follow status
           if (isAuthenticated) {
-            // Get the access token
-            const token = await getAccessToken();
-            
-            if (token) {
-              embedOptions.auth = {
-                token,
-                clientId: config.twitch.clientId
-              };
+            try {
+              // Get the access token - using await directly
+              const token = await getAccessToken();
               
-              // Force the layout to video-with-chat when authenticated
-              // This ensures the follow button and other interactive elements are shown
-              embedOptions.layout = 'video-with-chat';
+              if (token) {
+                console.log(`Adding auth token for ${stream.channel}`);
+                
+                // Make sure we're using the correct format for auth
+                embedOptions.auth = {
+                  token: token,
+                  clientId: config.twitch.clientId
+                };
+                
+                // Add time parameter to force refresh of authentication
+                embedOptions.time = new Date().getTime().toString();
+              } else {
+                console.warn('No token available for authentication');
+              }
+            } catch (error) {
+              console.error('Error getting access token:', error);
             }
           }
           
@@ -363,7 +375,7 @@ function ViewerContent() {
       // We don't need to explicitly destroy Twitch embeds
       // They will be garbage collected when their container elements are removed
     };
-  }, [streams, activeAudioIndex, getAccessToken]);
+  }, [streams, activeAudioIndex, getAccessToken, isAuthenticated]);
 
   // Add a new stream
   const addStream = (channelName?: string) => {
