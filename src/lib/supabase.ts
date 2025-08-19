@@ -10,6 +10,7 @@ export type Database = {
         Row: {
           id: string;
           twitch_id: string;
+          login: string;
           display_name: string;
           premium_flag: boolean;
           stripe_customer_id: string | null;
@@ -20,6 +21,7 @@ export type Database = {
         Insert: {
           id?: string;
           twitch_id: string;
+          login: string;
           display_name: string;
           premium_flag?: boolean;
           stripe_customer_id?: string | null;
@@ -30,6 +32,7 @@ export type Database = {
         Update: {
           id?: string;
           twitch_id?: string;
+          login?: string;
           display_name?: string;
           premium_flag?: boolean;
           stripe_customer_id?: string | null;
@@ -116,6 +119,7 @@ export type Database = {
           created_at?: string;
         };
       };
+
     };
   };
 };
@@ -333,20 +337,25 @@ export async function getPublicPacks(
 
 // Trending Packs
 export async function getTrendingPacks(limit = 10) {
-  const { data, error } = await supabase
-    .from('packs')
-    .select(`
-      *,
-      pack_streams(*),
-      owner:users!packs_owner_id_fkey(
-        display_name,
-        profile_image_url
-      )
-    `)
-    .eq('visibility', 'public')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  
-  if (error) throw error;
-  return data;
+  try {
+    const { data, error } = await supabase
+      .from('packs')
+      .select(`
+        *,
+        pack_streams(count)
+      `)
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching trending packs:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getTrendingPacks:', error);
+    throw error;
+  }
 }

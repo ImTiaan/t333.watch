@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { updateUser, getUser, supabase } from '@/lib/supabase';
+import { clearPremiumStatusCache } from '@/middleware/auth';
+import analytics from '@/lib/analytics';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -62,6 +64,16 @@ export async function POST(request: NextRequest) {
           premium_flag: true,
         });
         
+        // Clear premium status cache to force refresh
+        clearPremiumStatusCache(userId);
+        
+        // Track premium activation
+        analytics.trackFeatureUsage('premium_activated', {
+          userId,
+          twitchId,
+          timestamp: new Date().toISOString()
+        });
+        
         console.log(`User ${twitchId} is now premium`);
         break;
       }
@@ -92,6 +104,16 @@ export async function POST(request: NextRequest) {
           // Update the user's premium status
           await updateUser(data.id, {
             premium_flag: false,
+          });
+          
+          // Clear premium status cache to force refresh
+          clearPremiumStatusCache(data.id);
+          
+          // Track premium deactivation
+          analytics.trackFeatureUsage('premium_deactivated', {
+            userId: data.id,
+            twitchId: data.twitch_id,
+            timestamp: new Date().toISOString()
           });
           
           console.log(`User ${data.twitch_id} is no longer premium`);
