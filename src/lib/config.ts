@@ -17,12 +17,9 @@ export const config = {
   // Feature flags and limits
   features: {
     maxFreeStreams: 3,
-    maxPremiumStreams: 9,
+    maxPremiumStreams: 6,
     enableVodSync: true,
     enableNotifications: true,
-    enableCustomLayouts: true,
-    enableStreamPinning: true,
-    enableLayoutSaving: true,
   },
   
   // Subscription pricing
