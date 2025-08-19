@@ -85,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               twitch_id: userInfo.id,
               display_name: userInfo.display_name,
               premium_flag: false,
+              profile_image_url: userInfo.profile_image_url,
             });
             console.log('Created new user in Supabase');
             // New user is not premium
@@ -157,6 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   twitch_id: userInfo.id,
                   display_name: userInfo.display_name,
                   premium_flag: false,
+                  profile_image_url: userInfo.profile_image_url,
                 });
                 console.log('Created new user in Supabase');
                 // New user is not premium

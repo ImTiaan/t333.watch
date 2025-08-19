@@ -53,6 +53,12 @@ export default function PackForm({ initialData, onSuccess, onCancel }: PackFormP
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     setIsSubmitting(true);
     setError(null);
     

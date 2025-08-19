@@ -289,7 +289,8 @@ export async function getPublicPacks(
       *,
       pack_streams(*),
       owner:users!packs_owner_id_fkey(
-        display_name
+        display_name,
+        profile_image_url
       )
     `)
     .eq('visibility', 'public')
@@ -338,7 +339,8 @@ export async function getTrendingPacks(limit = 10) {
       *,
       pack_streams(*),
       owner:users!packs_owner_id_fkey(
-        display_name
+        display_name,
+        profile_image_url
       )
     `)
     .eq('visibility', 'public')
