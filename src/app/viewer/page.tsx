@@ -129,11 +129,14 @@ function ViewerContent() {
   const [currentQuality, setCurrentQuality] = useState<StreamQuality>('auto');
   const [packDescription, setPackDescription] = useState<string | null>(null);
   const [streamChannels, setStreamChannels] = useState<string[]>([]);
-// State to track if we're viewing a public pack
-const [isPublicPack, setIsPublicPack] = useState(false);
-
-// State to control the share modal
-const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  // State to track if we're viewing a public pack
+  const [isPublicPack, setIsPublicPack] = useState(false);
+  
+  // State to control the share modal
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  
+  // Reference to store Twitch embed instances
+  const embedRefs = useRef<Record<string, any>>({});
 
   
   // Initialize performance monitoring when component mounts
@@ -299,7 +302,7 @@ const [isShareModalOpen, setIsShareModalOpen] = useState(false);
             channel: stream.channel,
             parent: [window.location.hostname],
             muted: stream.muted,
-            layout: 'video',
+            layout: 'video-with-chat', // Change to video-with-chat to show follow button
             allowfullscreen: true,
             autoplay: true,
           };
@@ -314,6 +317,10 @@ const [isShareModalOpen, setIsShareModalOpen] = useState(false);
                 token,
                 clientId: config.twitch.clientId
               };
+              
+              // Force the layout to video-with-chat when authenticated
+              // This ensures the follow button and other interactive elements are shown
+              embedOptions.layout = 'video-with-chat';
             }
           }
           
@@ -616,9 +623,8 @@ const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     performanceMonitor.trackInteractionEnd('set-primary-stream');
   };
 
-  // Reference to store Twitch embed instances
-  const embedRefs = useRef<{ [key: string]: any }>({});
-
+  // We'll use the embedRefs from the component scope
+  
   // Set active audio by controlling the Twitch player
   const setActiveAudio = (index: number) => {
     // Track interaction start

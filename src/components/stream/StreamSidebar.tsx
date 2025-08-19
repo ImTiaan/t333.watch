@@ -26,9 +26,10 @@ export default function StreamSidebar({ isOpen, onToggle, onAddStream }: StreamS
 
   return (
     <div
-      className={`fixed top-[64px] right-0 bottom-[64px] w-80 bg-[#18181b] shadow-lg transform transition-transform duration-300 ease-in-out z-20 ${
+      className={`fixed top-[64px] right-0 w-80 bg-[#18181b] shadow-lg transform transition-transform duration-300 ease-in-out z-20 ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
+      style={{ height: 'calc(100vh - 128px)' }}
     >
       {/* Sidebar Header */}
       <div className="flex justify-between items-center p-4 border-b border-[#2d2d3a]">
