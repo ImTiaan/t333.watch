@@ -8,7 +8,7 @@
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { trackPageView } from '@/lib/analytics';
 
@@ -17,37 +17,46 @@ interface AnalyticsProviderProps {
 }
 
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
-  // Track page views when the route changes
-  useEffect(() => {
-    if (pathname) {
-      // Extract page name from pathname
-      const pageName = pathname === '/' 
-        ? 'home' 
-        : pathname.split('/').filter(Boolean).join('/');
-      
-      // Get query parameters
-      const queryParams: Record<string, string> = {};
-      if (searchParams) {
-        searchParams.forEach((value, key) => {
-          queryParams[key] = value;
+  // Create a separate component for the analytics tracking to wrap in suspense
+  const AnalyticsTracker = () => {
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    
+    // Track page views when the route changes
+    useEffect(() => {
+      if (pathname) {
+        // Extract page name from pathname
+        const pageName = pathname === '/'
+          ? 'home'
+          : pathname.split('/').filter(Boolean).join('/');
+        
+        // Get query parameters
+        const queryParams: Record<string, string> = {};
+        if (searchParams) {
+          searchParams.forEach((value, key) => {
+            queryParams[key] = value;
+          });
+        }
+        
+        // Track the page view
+        trackPageView(pageName, {
+          pathname,
+          queryParams: Object.keys(queryParams).length > 0 ? JSON.stringify(queryParams) : undefined,
+          referrer: document.referrer || undefined
         });
       }
-      
-      // Track the page view
-      trackPageView(pageName, {
-        pathname,
-        queryParams: Object.keys(queryParams).length > 0 ? JSON.stringify(queryParams) : undefined,
-        referrer: document.referrer || undefined
-      });
-    }
-  }, [pathname, searchParams]);
-
+    }, [pathname, searchParams]);
+    
+    return null;
+  };
+  
   return (
     <>
       {children}
+      <Suspense fallback={null}>
+        <AnalyticsTracker />
+      </Suspense>
       <Analytics />
     </>
   );

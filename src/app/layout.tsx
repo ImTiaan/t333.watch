@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
-import { NavigationTracker } from "@/components/analytics/NavigationTracker";
 import { config } from "@/lib/config";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -34,7 +33,6 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AnalyticsProvider>
-            <NavigationTracker />
             <div className="min-h-screen flex flex-col">
               <Header />
               <main className="flex-grow">

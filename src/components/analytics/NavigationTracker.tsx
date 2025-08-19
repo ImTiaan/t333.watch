@@ -7,11 +7,12 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import analytics, { EventCategory, NavigationEvents } from '@/lib/analytics';
 
-export function NavigationTracker() {
+// Inner component that uses the navigation hooks
+function NavigationTrackerInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -19,8 +20,8 @@ export function NavigationTracker() {
   useEffect(() => {
     if (pathname) {
       // Extract page name from pathname
-      const pageName = pathname === '/' 
-        ? 'home' 
+      const pageName = pathname === '/'
+        ? 'home'
         : pathname.split('/').filter(Boolean).join('/');
       
       // Get query parameters
@@ -44,6 +45,15 @@ export function NavigationTracker() {
 
   // This is a tracking component, so it doesn't render anything
   return null;
+}
+
+// Wrapper component that provides the suspense boundary
+export function NavigationTracker() {
+  return (
+    <Suspense fallback={null}>
+      <NavigationTrackerInner />
+    </Suspense>
+  );
 }
 
 export default NavigationTracker;
