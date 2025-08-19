@@ -33,6 +33,7 @@ export default function SimplifiedPackCard({ pack }: SimplifiedPackCardProps) {
               width={32}
               height={32}
               className="rounded-full mr-2"
+              unoptimized={true}
             />
           ) : (
             <div className="w-8 h-8 bg-[#3a3a3d] rounded-full mr-2 flex items-center justify-center text-xs">

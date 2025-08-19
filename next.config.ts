@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
   typescript: {
     // Disable TypeScript type checking during production builds
     ignoreBuildErrors: true,
+  },
+  images: {
+    domains: [
+      'static-cdn.jtvnw.net',  // Twitch profile images
+      'cdn.discordapp.com',    // Discord profile images (if needed)
+    ],
   }
 };
 
