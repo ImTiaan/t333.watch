@@ -137,6 +137,9 @@ function ViewerContent() {
   
   // Reference to store Twitch embed instances
   const embedRefs = useRef<Record<string, any>>({});
+  
+  // Reference to track which streams are playing
+  const playingStreamsRef = useRef<Set<string>>(new Set());
 
   
   // Initialize performance monitoring when component mounts
@@ -351,6 +354,20 @@ function ViewerContent() {
             } else {
               console.log(`Player ready for ${stream.channel} without authentication`);
             }
+            
+            // Add to playing streams by default since autoplay is enabled
+            playingStreamsRef.current.add(stream.playerId);
+            
+            // Add event listeners to the embed for play/pause events
+            embed.addEventListener('play', () => {
+              console.log(`Stream ${stream.channel} started playing`);
+              playingStreamsRef.current.add(stream.playerId);
+            });
+            
+            embed.addEventListener('pause', () => {
+              console.log(`Stream ${stream.channel} paused`);
+              playingStreamsRef.current.delete(stream.playerId);
+            });
           });
         } catch (error) {
           console.error('Error initializing Twitch embed:', error);
@@ -598,6 +615,10 @@ function ViewerContent() {
     // Determine which stream should have active audio (the new primary stream)
     const audioIndex = streamIndex;
     
+    // Save the current set of playing streams before making changes
+    const playingStreamIds = new Set(playingStreamsRef.current);
+    console.log(`Currently playing streams: ${Array.from(playingStreamIds).join(', ')}`);
+    
     // Create a new array with updated isPrimary and muted flags
     // but keep the same playerIds to avoid recreating the embeds
     const newStreams = streams.map((stream, i) => {
@@ -625,8 +646,7 @@ function ViewerContent() {
       }
     });
     
-    // Update the muted state of the players directly
-    // This avoids recreating the embeds which causes the streams to pause
+    // Update the muted state of the players directly and ensure all previously playing streams continue playing
     Object.keys(embedRefs.current).forEach(playerId => {
       const embed = embedRefs.current[playerId];
       if (embed && embed.getPlayer) {
@@ -635,7 +655,21 @@ function ViewerContent() {
           // Find which stream this player belongs to
           const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
           if (streamIndex !== -1) {
+            // Update muted state
             player.setMuted(streamIndex !== audioIndex);
+            
+            // If this stream was playing before, make sure it continues playing
+            if (playingStreamIds.has(playerId)) {
+              // Use setTimeout to ensure this happens after the muted state is updated
+              setTimeout(() => {
+                try {
+                  console.log(`Ensuring stream ${newStreams[streamIndex].channel} continues playing`);
+                  player.play();
+                } catch (error) {
+                  console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
+                }
+              }, 100);
+            }
           }
         }
       }
@@ -684,6 +718,10 @@ function ViewerContent() {
       }
     });
     
+    // Save the current set of playing streams before making changes
+    const playingStreamIds = new Set(playingStreamsRef.current);
+    console.log(`Currently playing streams: ${Array.from(playingStreamIds).join(', ')}`);
+    
     // Create a new array with updated muted flags
     const newStreams = streams.map((stream, i) => ({
       ...stream,
@@ -700,7 +738,21 @@ function ViewerContent() {
           // Find which stream this player belongs to
           const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
           if (streamIndex !== -1) {
+            // Update muted state
             player.setMuted(streamIndex !== index);
+            
+            // If this stream was playing before, make sure it continues playing
+            if (playingStreamIds.has(playerId)) {
+              // Use setTimeout to ensure this happens after the muted state is updated
+              setTimeout(() => {
+                try {
+                  console.log(`Ensuring stream ${newStreams[streamIndex].channel} continues playing`);
+                  player.play();
+                } catch (error) {
+                  console.error(`Error playing stream ${newStreams[streamIndex].channel}:`, error);
+                }
+              }, 100);
+            }
           }
         }
       }
@@ -723,6 +775,16 @@ function ViewerContent() {
   
   // Function to handle quality changes for all streams
   const handleQualityChange = (quality: StreamQuality) => {
+    // Track interaction start
+    performanceMonitor.trackInteractionStart('change-quality');
+    
+    console.log(`Changing quality to ${quality}`);
+    
+    // Save the current set of playing streams before making changes
+    const playingStreamIds = new Set(playingStreamsRef.current);
+    console.log(`Currently playing streams before quality change: ${Array.from(playingStreamIds).join(', ')}`);
+    
+    // Update the current quality state
     setCurrentQuality(quality);
     
     // Track quality change
@@ -741,12 +803,32 @@ function ViewerContent() {
           const player = embed.getPlayer();
           if (player && player.setQuality) {
             player.setQuality(quality);
+            
+            // If this stream was playing before, make sure it continues playing
+            if (playingStreamIds.has(playerId)) {
+              // Use setTimeout to ensure this happens after the quality change
+              setTimeout(() => {
+                try {
+                  // Find which stream this player belongs to for logging
+                  const streamIndex = streams.findIndex(s => s.playerId === playerId);
+                  const channelName = streamIndex !== -1 ? streams[streamIndex].channel : 'unknown';
+                  
+                  console.log(`Ensuring stream ${channelName} continues playing after quality change`);
+                  player.play();
+                } catch (error) {
+                  console.error(`Error playing stream after quality change:`, error);
+                }
+              }, 100);
+            }
           }
         } catch (error) {
           console.error('Error setting quality:', error);
         }
       }
     });
+    
+    // Track interaction end
+    performanceMonitor.trackInteractionEnd('change-quality');
   };
 
   // Show loading state while checking authentication or loading pack
