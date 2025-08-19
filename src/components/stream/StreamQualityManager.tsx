@@ -109,11 +109,34 @@ const StreamQualityManager: React.FC<StreamQualityManagerProps> = ({
   const [currentQuality, setCurrentQuality] = useState<StreamQuality>('auto');
   const [showQualityChangedWarning, setShowQualityChangedWarning] = useState(false);
   const [qualityChangeMessage, setQualityChangeMessage] = useState('');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
   // Performance metrics
   const fpsRef = useRef<number | null>(null);
   const memoryWarningsRef = useRef(0);
   const lastQualityChangeRef = useRef<number>(Date.now());
+  
+  // Check if notifications are disabled in localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const notificationsDisabled = localStorage.getItem('t333_quality_notifications_disabled');
+      if (notificationsDisabled === 'true') {
+        setNotificationsEnabled(false);
+      }
+    }
+  }, []);
+  
+  // Function to toggle notifications
+  const toggleNotifications = () => {
+    const newValue = !notificationsEnabled;
+    setNotificationsEnabled(newValue);
+    localStorage.setItem('t333_quality_notifications_disabled', newValue ? 'false' : 'true');
+    
+    // Track the toggle action
+    analytics.trackEvent(EventCategory.UI, 'quality_notifications_toggled', {
+      enabled: newValue
+    });
+  };
   
   // Monitor performance metrics
   useEffect(() => {
@@ -151,7 +174,8 @@ const StreamQualityManager: React.FC<StreamQualityManagerProps> = ({
               newQuality,
               reason: 'low_fps',
               fps: fpsRef.current,
-              streamCount
+              streamCount,
+              notificationsEnabled
             });
             
             // Call the callback if provided
@@ -171,7 +195,7 @@ const StreamQualityManager: React.FC<StreamQualityManagerProps> = ({
     }, 5000);
     
     return () => clearInterval(performanceCheckInterval);
-  }, [currentQuality, streamCount, onQualityChange]);
+  }, [currentQuality, streamCount, onQualityChange, notificationsEnabled]);
   
   // Adjust quality based on stream count and device capabilities
   useEffect(() => {
@@ -205,7 +229,8 @@ const StreamQualityManager: React.FC<StreamQualityManagerProps> = ({
         newQuality: recommendedQuality,
         reason: 'stream_count_increase',
         streamCount,
-        deviceTier: deviceCapabilities.tier
+        deviceTier: deviceCapabilities.tier,
+        notificationsEnabled
       });
       
       // Call the callback if provided
@@ -215,20 +240,52 @@ const StreamQualityManager: React.FC<StreamQualityManagerProps> = ({
       
       lastQualityChangeRef.current = Date.now();
     }
-  }, [streamCount, deviceCapabilities, isPremium, currentQuality, onQualityChange]);
+  }, [streamCount, deviceCapabilities, isPremium, currentQuality, onQualityChange, notificationsEnabled]);
   
   return (
     <>
-      {showQualityChangedWarning && (
-        <PerformanceWarning
-          message={qualityChangeMessage}
-          suggestion="You can manually adjust quality in stream settings"
-          level="info"
-          autoHide={true}
-          autoHideDuration={8000}
-          onClose={() => setShowQualityChangedWarning(false)}
-        />
+      {showQualityChangedWarning && notificationsEnabled && (
+        <div className="relative">
+          <PerformanceWarning
+            message={qualityChangeMessage}
+            suggestion="You can manually adjust quality in stream settings"
+            level="info"
+            autoHide={true}
+            autoHideDuration={8000}
+            onClose={() => setShowQualityChangedWarning(false)}
+          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleNotifications();
+            }}
+            className="absolute top-2 right-12 text-white/80 hover:text-white p-1 rounded-full hover:bg-black/20 transition-colors"
+            title="Disable quality notifications"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
+        </div>
       )}
+      
+      {/* Floating button to re-enable notifications if they're disabled */}
+      {!notificationsEnabled && (
+        <div className="fixed bottom-24 right-6 z-10">
+          <button
+            onClick={toggleNotifications}
+            className="bg-blue-500/90 text-white p-2 rounded-full shadow-lg hover:bg-blue-600/90 transition-colors flex items-center gap-2"
+            title="Enable quality notifications"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm">Show quality notifications</span>
+          </button>
+        </div>
+      )}
+      
       {children}
     </>
   );

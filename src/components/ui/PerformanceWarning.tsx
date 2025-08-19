@@ -181,6 +181,29 @@ export const StreamPerformanceWarning: React.FC<{
 }> = ({ streamCount, isPremium }) => {
   // Detect device capabilities
   const [deviceCapabilities] = useState(detectDeviceCapabilities);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  
+  // Check if notifications are disabled in localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const notificationsDisabled = localStorage.getItem('t333_quality_notifications_disabled');
+      if (notificationsDisabled === 'true') {
+        setNotificationsEnabled(false);
+      }
+    }
+  }, []);
+  
+  // Function to toggle notifications
+  const toggleNotifications = () => {
+    const newValue = !notificationsEnabled;
+    setNotificationsEnabled(newValue);
+    localStorage.setItem('t333_quality_notifications_disabled', newValue ? 'false' : 'true');
+    
+    // Track the toggle action
+    analytics.trackEvent(EventCategory.UI, 'performance_notifications_toggled', {
+      enabled: newValue
+    });
+  };
   
   // Determine warning level based on stream count and device capabilities
   const getWarningLevel = (): {
@@ -258,16 +281,50 @@ export const StreamPerformanceWarning: React.FC<{
         }
       );
     }
-  }, [shouldShow, streamCount, isPremium, level, deviceCapabilities]);
+  }, [shouldShow, streamCount, isPremium, level, deviceCapabilities, notificationsEnabled]);
   
-  if (!shouldShow) return null;
+  if (!shouldShow || !notificationsEnabled) {
+    // If we shouldn't show the warning or notifications are disabled, check if we need to show the re-enable button
+    if (!notificationsEnabled && shouldShow) {
+      return (
+        <div className="fixed bottom-24 right-6 z-10">
+          <button
+            onClick={toggleNotifications}
+            className="bg-blue-500/90 text-white p-2 rounded-full shadow-lg hover:bg-blue-600/90 transition-colors flex items-center gap-2"
+            title="Enable performance notifications"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm">Show performance warnings</span>
+          </button>
+        </div>
+      );
+    }
+    return null;
+  }
   
   return (
-    <PerformanceWarning
-      message={message}
-      suggestion={suggestion}
-      level={level}
-      autoHideDuration={level === 'error' ? 15000 : 8000} // Keep error messages visible longer
-    />
+    <div className="relative">
+      <PerformanceWarning
+        message={message}
+        suggestion={suggestion}
+        level={level}
+        autoHideDuration={level === 'error' ? 15000 : 8000} // Keep error messages visible longer
+      />
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleNotifications();
+        }}
+        className="absolute top-2 right-12 text-white/80 hover:text-white p-1 rounded-full hover:bg-black/20 transition-colors"
+        title="Disable performance notifications"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+      </button>
+    </div>
   );
 };
