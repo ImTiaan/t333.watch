@@ -597,22 +597,16 @@ function ViewerContent() {
     
     // Determine which stream should have active audio (the new primary stream)
     const audioIndex = streamIndex;
-    setActiveAudioIndex(audioIndex);
     
-    // Create a new array with updated isPrimary, muted flags, and new playerIds
-    // This forces recreation of the Twitch embeds to prevent black screens
+    // Create a new array with updated isPrimary and muted flags
+    // but keep the same playerIds to avoid recreating the embeds
     const newStreams = streams.map((stream, i) => {
-      // Generate a new playerId for each stream to force recreation
-      const newPlayerId = `twitch-player-${Date.now()}-${i}-${stream.channel}`;
-      
       return {
         ...stream,
         // Update isPrimary flag - only the selected stream is primary
         isPrimary: i === streamIndex,
         // Update muted flag - only the primary stream has audio
-        muted: i !== audioIndex,
-        // Update playerId to force recreation of the Twitch embed
-        playerId: newPlayerId
+        muted: i !== audioIndex
       };
     });
     
@@ -631,11 +625,26 @@ function ViewerContent() {
       }
     });
     
-    // Clear the embedRefs to force recreation of Twitch embed instances
-    embedRefs.current = {};
+    // Update the muted state of the players directly
+    // This avoids recreating the embeds which causes the streams to pause
+    Object.keys(embedRefs.current).forEach(playerId => {
+      const embed = embedRefs.current[playerId];
+      if (embed && embed.getPlayer) {
+        const player = embed.getPlayer();
+        if (player) {
+          // Find which stream this player belongs to
+          const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
+          if (streamIndex !== -1) {
+            player.setMuted(streamIndex !== audioIndex);
+          }
+        }
+      }
+    });
     
-    // Update the streams state with the new array - single state update
-    // that handles both primary status and audio changes
+    // Update the active audio index
+    setActiveAudioIndex(audioIndex);
+    
+    // Update the streams state with the new array
     setStreams(newStreams);
     
     // Track interaction end
@@ -657,9 +666,6 @@ function ViewerContent() {
     // Get the channel name for logging
     const channelName = streams[index].channel;
     
-    // Update active audio index
-    setActiveAudioIndex(index);
-    
     // Track analytics event - change active audio
     analytics.trackStreamEvent(StreamEvents.CHANGE_AUDIO, {
       channel: channelName,
@@ -678,20 +684,24 @@ function ViewerContent() {
       }
     });
     
-    // We don't need to regenerate playerIds here since we're just changing audio
-    // and not repositioning streams in the grid
+    // Create a new array with updated muted flags
     const newStreams = streams.map((stream, i) => ({
       ...stream,
       muted: i !== index,
     }));
     
     // Update the actual players if they exist
-    streams.forEach((stream, i) => {
-      const embed = embedRefs.current[stream.playerId];
+    // This is the key part - we update the players directly without recreating them
+    Object.keys(embedRefs.current).forEach(playerId => {
+      const embed = embedRefs.current[playerId];
       if (embed && embed.getPlayer) {
         const player = embed.getPlayer();
         if (player) {
-          player.setMuted(i !== index);
+          // Find which stream this player belongs to
+          const streamIndex = newStreams.findIndex(s => s.playerId === playerId);
+          if (streamIndex !== -1) {
+            player.setMuted(streamIndex !== index);
+          }
         }
       }
     });
@@ -701,6 +711,10 @@ function ViewerContent() {
       `${s.channel}: isPrimary=${s.isPrimary}, muted=${s.muted}`
     ));
     
+    // Update the active audio index
+    setActiveAudioIndex(index);
+    
+    // Update the streams state with the new array
     setStreams(newStreams);
     
     // Track interaction end
