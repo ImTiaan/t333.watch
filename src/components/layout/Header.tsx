@@ -15,16 +15,16 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-[#18181b] border-b border-[#2d2d3a] p-4 sticky top-0 z-50 shadow-md">
+    <header className="bg-[#18181b] border-b border-[#2d2d3a] py-3 px-6 sticky top-0 z-50 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/" className="flex items-center">
             <Image
               src="/t3logo.png"
               alt="t333.watch"
-              width={150}
-              height={50}
-              className="h-12 w-auto"
+              width={240}
+              height={80}
+              className="h-16 w-auto"
               priority
             />
           </Link>

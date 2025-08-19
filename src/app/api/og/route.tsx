@@ -50,11 +50,11 @@ export async function GET(req: NextRequest) {
             {/* Using the t3logo.png image */}
             <img
               src={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/t3logo.png`}
-              width="180"
-              height="60"
+              width="240"
+              height="80"
               alt="t333.watch"
               style={{
-                height: '60px',
+                height: '80px',
                 width: 'auto',
               }}
             />
