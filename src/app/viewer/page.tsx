@@ -299,21 +299,6 @@ function ViewerContent() {
         }
         
         try {
-          // First get the token if authenticated
-          let authToken = null;
-          if (isAuthenticated) {
-            try {
-              authToken = await getAccessToken();
-              if (!authToken) {
-                console.warn('No auth token available despite being authenticated');
-              } else {
-                console.log(`Got auth token for ${stream.channel}: ${authToken.substring(0, 5)}...`);
-              }
-            } catch (error) {
-              console.error('Error getting access token:', error);
-            }
-          }
-          
           // Create embed options with forced layout
           const embedOptions: any = {
             width: '100%',
@@ -328,12 +313,22 @@ function ViewerContent() {
             time: Date.now().toString()
           };
           
-          // Add auth token if available
-          if (authToken) {
-            embedOptions.auth = {
-              token: authToken,
-              clientId: config.twitch.clientId
-            };
+          // For authentication, we need to handle it differently
+          // Instead of passing the token in the embed options, we'll set it in localStorage
+          // with a specific key that the Twitch embed looks for
+          if (isAuthenticated) {
+            try {
+              const authToken = await getAccessToken();
+              if (authToken) {
+                // This is the key - Twitch embed looks for this specific localStorage key
+                localStorage.setItem('twitch.embed.auth.token', authToken);
+                console.log(`Set auth token in localStorage for Twitch embed: ${authToken.substring(0, 5)}...`);
+              } else {
+                console.warn('No auth token available despite being authenticated');
+              }
+            } catch (error) {
+              console.error('Error getting access token:', error);
+            }
           }
           
           // Add type guard to ensure window.Twitch is defined
@@ -351,7 +346,7 @@ function ViewerContent() {
             player.setMuted(stream.muted);
             
             // Log authentication status
-            if (isAuthenticated && authToken) {
+            if (isAuthenticated) {
               console.log(`Player ready for ${stream.channel} with authentication`);
             } else {
               console.log(`Player ready for ${stream.channel} without authentication`);
@@ -379,6 +374,11 @@ function ViewerContent() {
     
     // Cleanup function
     return () => {
+      // Clean up the auth token from localStorage when component unmounts
+      if (isAuthenticated) {
+        localStorage.removeItem('twitch.embed.auth.token');
+      }
+      
       // We don't need to explicitly destroy Twitch embeds
       // They will be garbage collected when their container elements are removed
     };
