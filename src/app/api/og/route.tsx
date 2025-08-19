@@ -20,14 +20,7 @@ export async function GET(req: NextRequest) {
     const streamsParam = searchParams.get('streams') || '';
     const streams = streamsParam ? streamsParam.split(',') : [];
     
-    // Load the Inter font
-    const interRegular = await fetch(
-      new URL('../../../../public/fonts/Inter-Regular.ttf', import.meta.url)
-    ).then((res) => res.arrayBuffer());
-    
-    const interBold = await fetch(
-      new URL('../../../../public/fonts/Inter-Bold.ttf', import.meta.url)
-    ).then((res) => res.arrayBuffer());
+    // No custom fonts - using system fonts instead
     
     // Generate the image
     return new ImageResponse(
@@ -43,7 +36,7 @@ export async function GET(req: NextRequest) {
             backgroundColor: '#0e0e10',
             color: 'white',
             padding: '40px',
-            fontFamily: 'Inter',
+            fontFamily: 'system-ui, sans-serif',
           }}
         >
           {/* Logo */}
@@ -194,20 +187,6 @@ export async function GET(req: NextRequest) {
       {
         width: 1200,
         height: 630,
-        fonts: [
-          {
-            name: 'Inter',
-            data: interRegular,
-            weight: 400,
-            style: 'normal',
-          },
-          {
-            name: 'Inter',
-            data: interBold,
-            weight: 700,
-            style: 'normal',
-          },
-        ],
       }
     );
   } catch (error) {
