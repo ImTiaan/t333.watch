@@ -2,8 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { config } from '@/lib/config';
-import { createUser, getUser } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { twitchApi } from '@/lib/twitch-api';
 import Cookies from 'js-cookie';
 
@@ -26,7 +25,7 @@ function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -70,7 +69,7 @@ function CallbackContent() {
         }
 
         const tokenData = await tokenResponse.json();
-        const { access_token, expires_in } = tokenData;
+        const { access_token } = tokenData;
 
         console.log('Successfully obtained access token');
         

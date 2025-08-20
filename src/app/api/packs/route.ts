@@ -72,8 +72,8 @@ export async function GET(request: NextRequest) {
     const packs = await getUserPacks(user.id);
     
     return NextResponse.json({ packs });
-  } catch (error) {
-    console.error('Error getting packs:', error);
+  } catch {
+    console.error('Error getting packs');
     return NextResponse.json({ error: 'Failed to get packs' }, { status: 500 });
   }
 }

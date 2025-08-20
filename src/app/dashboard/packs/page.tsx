@@ -45,8 +45,8 @@ async function getAuthenticatedUser() {
     }
     
     return user;
-  } catch (error) {
-    console.error('Error getting authenticated user:', error);
+  } catch {
+    console.error('Error getting authenticated user');
     return null;
   }
 }

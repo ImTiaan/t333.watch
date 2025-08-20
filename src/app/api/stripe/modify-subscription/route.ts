@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { getUser, updateUser } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { clearPremiumStatusCache } from '@/middleware/auth';
 import analytics from '@/lib/analytics';
 import { config } from '@/lib/config';
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
       subscription: {
         id: updatedSubscription.id,
         status: updatedSubscription.status,
-        current_period_end: (updatedSubscription as any).current_period_end,
+        current_period_end: (updatedSubscription as any).current_period_end, // eslint-disable-line @typescript-eslint/no-explicit-any
         plan: newPlan
       },
       message: `Successfully ${action}d to ${newPlan} plan. Changes will be reflected in your next billing cycle.`
@@ -215,10 +215,10 @@ export async function GET(request: NextRequest) {
         currentSubscription = {
           id: sub.id,
           status: sub.status,
-          current_period_start: (sub as any).current_period_start,
-          current_period_end: (sub as any).current_period_end,
+          current_period_start: (sub as any).current_period_start, // eslint-disable-line @typescript-eslint/no-explicit-any
+          current_period_end: (sub as any).current_period_end, // eslint-disable-line @typescript-eslint/no-explicit-any
           plan: currentPlan,
-          cancel_at_period_end: (sub as any).cancel_at_period_end
+          cancel_at_period_end: (sub as any).cancel_at_period_end // eslint-disable-line @typescript-eslint/no-explicit-any
         };
       }
     }

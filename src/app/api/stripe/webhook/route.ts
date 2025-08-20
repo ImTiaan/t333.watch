@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { updateUser, getUser, supabase } from '@/lib/supabase';
+import { updateUser, supabase } from '@/lib/supabase';
 import { clearPremiumStatusCache } from '@/middleware/auth';
 import analytics from '@/lib/analytics';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16' as any, // Type assertion to bypass version check
+  apiVersion: '2023-10-16' as any, // eslint-disable-line @typescript-eslint/no-explicit-any
 });
 
 // Webhook endpoint for Stripe events
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET || ''
       );
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error(`Webhook signature verification failed: ${err.message}`);
       return NextResponse.json(
         { error: `Webhook signature verification failed: ${err.message}` },
