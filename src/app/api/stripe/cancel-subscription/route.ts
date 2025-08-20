@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       feedback: feedback || '',
       immediate,
       canceledAt: new Date().toISOString(),
-      periodEnd: immediate ? null : (canceledSubscription as any).current_period_end // eslint-disable-line @typescript-eslint/no-explicit-any
+      periodEnd: immediate ? null : (canceledSubscription as any).current_period_end
     });
 
     // Log feedback for analysis
@@ -96,12 +96,12 @@ export async function POST(request: NextRequest) {
       subscription: {
         id: canceledSubscription.id,
         status: canceledSubscription.status,
-        cancel_at_period_end: (canceledSubscription as any).cancel_at_period_end, // eslint-disable-line @typescript-eslint/no-explicit-any
-        current_period_end: (canceledSubscription as any).current_period_end // eslint-disable-line @typescript-eslint/no-explicit-any
+        cancel_at_period_end: (canceledSubscription as any).cancel_at_period_end,
+        current_period_end: (canceledSubscription as any).current_period_end
       },
       message: immediate 
         ? 'Your subscription has been canceled immediately. You no longer have access to premium features.'
-        : `Your subscription will be canceled at the end of your current billing period (${new Date(((canceledSubscription as any).current_period_end || 0) * 1000).toLocaleDateString()}). You'll continue to have access to premium features until then.` // eslint-disable-line @typescript-eslint/no-explicit-any
+        : `Your subscription will be canceled at the end of your current billing period (${new Date(((canceledSubscription as any).current_period_end || 0) * 1000).toLocaleDateString()}). You'll continue to have access to premium features until then.`
     });
 
   } catch (error) {

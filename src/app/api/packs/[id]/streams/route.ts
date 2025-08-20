@@ -101,8 +101,8 @@ export async function POST(
     });
     
     return NextResponse.json({ stream }, { status: 201 });
-  } catch {
-    console.error('Error adding stream to pack');
+  } catch (error) {
+    console.error('Error adding stream to pack:', error);
     return NextResponse.json({ error: 'Failed to add stream to pack' }, { status: 500 });
   }
 }

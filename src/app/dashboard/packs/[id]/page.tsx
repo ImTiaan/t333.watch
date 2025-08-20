@@ -51,8 +51,8 @@ async function getAuthenticatedUser() {
     }
     
     return user;
-  } catch {
-    console.error('Error getting authenticated user');
+  } catch (error) {
+    console.error('Error getting authenticated user:', error);
     return null;
   }
 }
@@ -159,7 +159,7 @@ export default async function PackDetailsPage({ params }: PageProps) {
           packId={params.id}
           packTitle={pack.title}
           packDescription={pack.description}
-          packThumbnail={`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/og?title=${encodeURIComponent(pack.title)}&streams=${encodeURIComponent(pack.pack_streams?.map((s: any) => s.twitch_channel).join(',') || '')}`} // eslint-disable-line @typescript-eslint/no-explicit-any
+          packThumbnail={`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/og?title=${encodeURIComponent(pack.title)}&streams=${encodeURIComponent(pack.pack_streams?.map((s: any) => s.twitch_channel).join(',') || '')}`}
         />
       </div>
       

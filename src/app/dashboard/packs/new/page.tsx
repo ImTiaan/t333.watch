@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PackForm from '@/components/packs/PackForm';
 
@@ -56,7 +56,7 @@ export default function NewPackPage() {
             <h3 className="text-lg font-medium text-[#9146FF]">Choose a Clear Title</h3>
             <p className="text-gray-300">
               Use a descriptive title that clearly indicates what viewers can expect.
-              For example, &quot;NoPixel Heist - Multiple POVs&quot; or &quot;Valorant Tournament Finals&quot;.
+              For example, "NoPixel Heist - Multiple POVs" or "Valorant Tournament Finals".
             </p>
           </div>
           

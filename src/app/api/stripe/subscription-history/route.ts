@@ -82,11 +82,11 @@ export async function GET(request: NextRequest) {
     const formattedSubscriptions = subscriptions.data.map(sub => ({
       id: sub.id,
       status: sub.status,
-      current_period_start: (sub as any).current_period_start, // eslint-disable-line @typescript-eslint/no-explicit-any
-      current_period_end: (sub as any).current_period_end, // eslint-disable-line @typescript-eslint/no-explicit-any
+      current_period_start: (sub as any).current_period_start,
+      current_period_end: (sub as any).current_period_end,
       created: sub.created,
-      canceled_at: (sub as any).canceled_at, // eslint-disable-line @typescript-eslint/no-explicit-any
-      ended_at: (sub as any).ended_at, // eslint-disable-line @typescript-eslint/no-explicit-any
+      canceled_at: (sub as any).canceled_at,
+      ended_at: (sub as any).ended_at,
       plan: {
         id: sub.items.data[0]?.price.id,
         amount: sub.items.data[0]?.price.unit_amount,
@@ -117,11 +117,11 @@ export async function GET(request: NextRequest) {
       created: invoice.created,
       period_start: invoice.period_start,
       period_end: invoice.period_end,
-      hosted_invoice_url: (invoice as any).hosted_invoice_url, // eslint-disable-line @typescript-eslint/no-explicit-any
-      invoice_pdf: (invoice as any).invoice_pdf, // eslint-disable-line @typescript-eslint/no-explicit-any
-      subscription_id: (invoice as any).subscription, // eslint-disable-line @typescript-eslint/no-explicit-any
-      payment_intent: (invoice as any).payment_intent ? { // eslint-disable-line @typescript-eslint/no-explicit-any
-        id: (invoice as any).payment_intent as string, // eslint-disable-line @typescript-eslint/no-explicit-any
+      hosted_invoice_url: (invoice as any).hosted_invoice_url,
+      invoice_pdf: (invoice as any).invoice_pdf,
+      subscription_id: (invoice as any).subscription,
+      payment_intent: (invoice as any).payment_intent ? {
+        id: (invoice as any).payment_intent as string,
         status: invoice.status
       } : null
     }));
