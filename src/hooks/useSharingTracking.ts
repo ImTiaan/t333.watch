@@ -26,7 +26,7 @@ export function useSharingTracking() {
     contentType: string,
     contentId: string,
     method: SharingMethod,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.SOCIAL, SocialEvents.SHARE_CONTENT, {
       contentType,
@@ -51,7 +51,7 @@ export function useSharingTracking() {
   const trackCopyLink = useCallback((
     contentType: string,
     contentId: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.SOCIAL, SocialEvents.COPY_LINK, {
       contentType,
@@ -77,7 +77,7 @@ export function useSharingTracking() {
     contentType: string,
     contentId: string,
     platform: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.SOCIAL, SocialEvents.SOCIAL_SHARE, {
       contentType,

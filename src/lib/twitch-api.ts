@@ -41,7 +41,7 @@ export class TwitchAPI {
   private async request<T>(
     endpoint: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-    body?: any
+    body?: Record<string, unknown>
   ): Promise<T> {
     const url = `https://api.twitch.tv/helix/${endpoint}`;
     

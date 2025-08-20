@@ -40,14 +40,15 @@ const detectDeviceCapabilities = (): {
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   
   // Check for memory (if available)
-  const hasLowMemory = 'deviceMemory' in navigator && (navigator as any).deviceMemory < 4;
+  const hasLowMemory = 'deviceMemory' in navigator && (navigator as { deviceMemory?: number }).deviceMemory && (navigator as { deviceMemory: number }).deviceMemory < 4;
   
   // Check for CPU cores (if available)
   const hasLowCPU = 'hardwareConcurrency' in navigator && navigator.hardwareConcurrency < 4;
   
   // Check for connection speed (if available)
   const hasSlowConnection = 'connection' in navigator && 
-    ['slow-2g', '2g', '3g'].includes((navigator as any).connection?.effectiveType);
+    (navigator as { connection?: { effectiveType?: string } }).connection?.effectiveType &&
+    ['slow-2g', '2g', '3g'].includes((navigator as { connection: { effectiveType: string } }).connection.effectiveType);
   
   // Determine device tier
   if (isMobile || hasLowMemory || hasLowCPU || hasSlowConnection) {

@@ -275,7 +275,7 @@ export function usePremiumFeature(featureName: keyof PremiumFeatures) {
 export function usePremiumFeatureTracking() {
   const { user } = useAuth();
   
-  const trackFeatureUsage = useCallback((featureName: string, properties?: Record<string, any>) => {
+  const trackFeatureUsage = useCallback((featureName: string, properties?: Record<string, unknown>) => {
     analytics.trackFeatureUsage(`premium_feature_${featureName}`, {
       userId: user?.id,
       timestamp: new Date().toISOString(),

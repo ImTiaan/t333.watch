@@ -7,7 +7,7 @@ import { updateUser } from '@/lib/supabase';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16' as any, // Type assertion to bypass version check
+  apiVersion: '2025-07-30.basil',
 });
 
 export async function POST(request: NextRequest) {
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       },
       message: immediate 
         ? 'Your subscription has been canceled immediately. You no longer have access to premium features.'
-        : `Your subscription will be canceled at the end of your current billing period (${new Date((canceledSubscription as any).current_period_end * 1000).toLocaleDateString()}). You'll continue to have access to premium features until then.`
+        : `Your subscription will be canceled at the end of your current billing period (${new Date(((canceledSubscription as any).current_period_end || 0) * 1000).toLocaleDateString()}). You'll continue to have access to premium features until then.`
     });
 
   } catch (error) {

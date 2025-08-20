@@ -27,7 +27,7 @@ function logQueryPerformance(
   table: string,
   duration: number,
   query: string,
-  params?: any
+  params?: any // eslint-disable-line @typescript-eslint/no-explicit-any
 ) {
   // Determine log level based on duration
   let logLevel = 'log';
@@ -97,10 +97,10 @@ export function createPerformanceTrackingSupabase(supabase: SupabaseClient): Sup
   
   // Create a proxy to intercept Supabase method calls
   const handler = {
-    get(target: any, prop: string) {
+    get(target: any, prop: string) { // eslint-disable-line @typescript-eslint/no-explicit-any
       // If the property is a function, wrap it
       if (typeof target[prop] === 'function') {
-        return function(...args: any[]) {
+        return function(...args: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
           return target[prop](...args);
         };
       }
@@ -112,10 +112,10 @@ export function createPerformanceTrackingSupabase(supabase: SupabaseClient): Sup
           
           // Create a proxy for the query builder
           return new Proxy(queryBuilder, {
-            get(qbTarget: any, qbProp: string) {
+            get(qbTarget: any, qbProp: string) { // eslint-disable-line @typescript-eslint/no-explicit-any
               // If the property is a query method, wrap it to measure performance
               if (['select', 'insert', 'update', 'delete', 'upsert'].includes(qbProp)) {
-                return function(...qbArgs: any[]) {
+                return function(...qbArgs: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
                   const startTime = isBrowser ? performance.now() : Date.now();
                   const query = `${qbProp}(${qbArgs.map(a => JSON.stringify(a)).join(', ')})`;
                   
@@ -124,11 +124,11 @@ export function createPerformanceTrackingSupabase(supabase: SupabaseClient): Sup
                   
                   // For methods that return a promise
                   if (result && typeof result.then === 'function') {
-                    return result.then((data: any) => {
+                    return result.then((data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
                       const duration = (isBrowser ? performance.now() : Date.now()) - startTime;
                       logQueryPerformance(qbProp, table, duration, query, { args: qbArgs, result: data });
                       return data;
-                    }).catch((error: any) => {
+                    }).catch((error: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
                       const duration = (isBrowser ? performance.now() : Date.now()) - startTime;
                       console.error(
                         `%c[DB ERROR] ${qbProp} ${table} (${duration.toFixed(2)}ms)`,

@@ -22,7 +22,7 @@ export function useStreamTracking() {
   const trackAddStream = useCallback((
     channel: string,
     streamCount: number,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.STREAM, StreamEvents.ADD_STREAM, {
       channel,
@@ -46,7 +46,7 @@ export function useStreamTracking() {
   const trackRemoveStream = useCallback((
     channel: string,
     streamCount: number,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.STREAM, StreamEvents.REMOVE_STREAM, {
       channel,
@@ -70,7 +70,7 @@ export function useStreamTracking() {
   const trackSetPrimaryStream = useCallback((
     channel: string,
     previousPrimary?: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.STREAM, StreamEvents.SET_PRIMARY, {
       channel,
@@ -92,7 +92,7 @@ export function useStreamTracking() {
    */
   const trackChangeAudio = useCallback((
     channel: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.STREAM, StreamEvents.CHANGE_AUDIO, {
       channel,
@@ -115,7 +115,7 @@ export function useStreamTracking() {
   const trackStreamError = useCallback((
     channel: string,
     errorMessage: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.STREAM, StreamEvents.STREAM_ERROR, {
       channel,
@@ -141,7 +141,7 @@ export function useStreamTracking() {
     channel: string,
     newQuality: string,
     previousQuality: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.STREAM, StreamEvents.STREAM_QUALITY_CHANGE, {
       channel,
@@ -164,7 +164,7 @@ export function useStreamTracking() {
    */
   const trackBuffering = useCallback((
     channel: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.STREAM, StreamEvents.STREAM_BUFFERING, {
       channel,
@@ -187,7 +187,7 @@ export function useStreamTracking() {
   const trackMaxStreamsReached = useCallback((
     maxStreams: number,
     attemptedChannel?: string,
-    properties?: Record<string, any>
+    properties?: Record<string, unknown>
   ) => {
     analytics.trackEvent(EventCategory.STREAM, StreamEvents.MAX_STREAMS_REACHED, {
       maxStreams,

@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
             }}
           >
             {/* Using the t3logo.png image */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/t3logo.png`}
               width="240"
@@ -183,7 +184,7 @@ export async function GET(req: NextRequest) {
         height: 630,
       }
     );
-  } catch (error) {
+  } catch {
     // If there's an error, return a simple error image
     return new ImageResponse(
       (

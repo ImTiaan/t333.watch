@@ -8,7 +8,7 @@ import { requireAuth } from '@/middleware/auth';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16' as any, // Type assertion to bypass version check
+  apiVersion: '2025-07-30.basil',
 });
 
 export async function POST(request: NextRequest) {

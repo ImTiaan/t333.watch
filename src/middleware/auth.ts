@@ -63,7 +63,7 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<AuthRe
         // Update the local user object
         user.profile_image_url = userInfo.profile_image_url;
       }
-    } catch (error) {
+    } catch {
       // User doesn't exist, create a new one
       try {
         user = await createUser({

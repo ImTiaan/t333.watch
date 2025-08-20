@@ -11,12 +11,12 @@
 
 import { useEffect, useRef } from 'react';
 import performanceMonitor from '@/lib/performance';
-import analytics, { EventCategory, StreamEvents, PerformanceEvents } from '@/lib/analytics';
+import analytics, { StreamEvents, PerformanceEvents } from '@/lib/analytics';
 
 interface StreamPerformanceTrackerProps {
   streamId: string;
   playerId: string;
-  embed?: any; // Twitch embed instance
+  embed?: any; // eslint-disable-line @typescript-eslint/no-explicit-any -- Twitch embed instance
   isVisible?: boolean;
 }
 
@@ -147,7 +147,7 @@ const StreamPerformanceTracker: React.FC<StreamPerformanceTrackerProps> = ({
       }
     };
     
-    const handleError = (error: any) => {
+    const handleError = (error: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
       performanceMonitor.logMetric({
         context: 'Stream Error',
         details: {
@@ -241,7 +241,7 @@ const StreamPerformanceTracker: React.FC<StreamPerformanceTrackerProps> = ({
               lastQualityRef.current = quality;
             }
           }
-        } catch (error) {
+        } catch {
           // Ignore errors in quality checking
         }
       }, 10000); // Check every 10 seconds
@@ -264,7 +264,7 @@ const StreamPerformanceTracker: React.FC<StreamPerformanceTrackerProps> = ({
           player.removeEventListener('buffering', handleBuffering);
           player.removeEventListener('error', handleError);
         }
-      } catch (error) {
+      } catch {
         // Ignore errors in cleanup
       }
       

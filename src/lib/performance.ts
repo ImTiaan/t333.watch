@@ -45,7 +45,7 @@ export interface PerformanceMetrics {
   responseTime?: number;
   timestamp: number;
   context?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 // Sampling rate (1 = every frame, 2 = every other frame, etc.)
@@ -139,8 +139,8 @@ class MemoryTracker {
   
   private trackMemory() {
     // Only run in browser and check if performance.memory is available (Chrome only)
-    if (isBrowser && performance && (performance as any).memory) {
-      const memoryInfo = (performance as any).memory;
+    if (isBrowser && performance && (performance as unknown as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory) {
+      const memoryInfo = (performance as unknown as { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
       const usedHeapSizeMB = Math.round(memoryInfo.usedJSHeapSize / (1024 * 1024));
       
       performanceLogger.logMetric({
