@@ -17,7 +17,7 @@ export function useSubscriptionTracking() {
    * 
    * @param properties Additional properties to include with the event
    */
-  const trackViewPlans = useCallback((properties?: Record<string, unknown>) => {
+  const trackViewPlans = useCallback((properties?: Record<string, any>) => {
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.VIEW_PLANS, {
       userId: user?.id,
       username: user?.display_name,
@@ -40,7 +40,7 @@ export function useSubscriptionTracking() {
     planId: string,
     planName: string,
     price: number,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.START_CHECKOUT, {
       planId,
@@ -67,7 +67,7 @@ export function useSubscriptionTracking() {
     planId: string,
     planName: string,
     price: number,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.COMPLETE_CHECKOUT, {
       planId,
@@ -90,7 +90,7 @@ export function useSubscriptionTracking() {
    */
   const trackCancelSubscription = useCallback((
     reason?: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.CANCEL_SUBSCRIPTION, {
       reason,
@@ -113,7 +113,7 @@ export function useSubscriptionTracking() {
   const trackUpgradeSubscription = useCallback((
     fromPlanId: string,
     toPlanId: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.UPGRADE_SUBSCRIPTION, {
       fromPlanId,
@@ -137,7 +137,7 @@ export function useSubscriptionTracking() {
   const trackPaymentError = useCallback((
     errorCode: string,
     errorMessage: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.PAYMENT_ERROR, {
       errorCode,

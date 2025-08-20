@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { wrapSupabaseWithPerformanceTracking } from './supabasePerformance';
+import { twitchApi } from './twitch-api';
 
 // Types for our database tables
 export type Database = {
@@ -100,21 +101,21 @@ export type Database = {
           id: string;
           user_id: string;
           event_type: 'pack_live' | 'trending';
-          payload: Record<string, unknown>;
+          payload: any;
           created_at: string;
         };
         Insert: {
           id?: string;
           user_id: string;
           event_type: 'pack_live' | 'trending';
-          payload: Record<string, unknown>;
+          payload: any;
           created_at?: string;
         };
         Update: {
           id?: string;
           user_id?: string;
           event_type?: 'pack_live' | 'trending';
-          payload?: Record<string, unknown>;
+          payload?: any;
           created_at?: string;
         };
       };

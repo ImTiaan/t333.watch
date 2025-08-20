@@ -20,7 +20,7 @@ export function useFeatureTracking() {
    */
   const trackFeatureUsage = useCallback((
     featureName: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.FEATURE, FeatureEvents.FEATURE_USAGE, {
       feature: featureName,
@@ -41,7 +41,7 @@ export function useFeatureTracking() {
    */
   const trackPremiumFeatureUsage = useCallback((
     featureName: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.FEATURE, FeatureEvents.PREMIUM_FEATURE_USAGE, {
       feature: featureName,
@@ -62,7 +62,7 @@ export function useFeatureTracking() {
    */
   const trackPremiumFeaturePrompt = useCallback((
     featureName: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.FEATURE, FeatureEvents.PREMIUM_FEATURE_PROMPT, {
       feature: featureName,
@@ -82,7 +82,7 @@ export function useFeatureTracking() {
    */
   const trackFeatureDiscovery = useCallback((
     featureName: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.FEATURE, FeatureEvents.FEATURE_DISCOVERY, {
       feature: featureName,

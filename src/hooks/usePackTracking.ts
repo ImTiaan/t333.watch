@@ -24,7 +24,7 @@ export function usePackTracking() {
     packId: string,
     packTitle: string,
     streamCount: number,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.PACK, PackEvents.CREATE_PACK, {
       packId,
@@ -51,7 +51,7 @@ export function usePackTracking() {
     packId: string,
     packTitle: string,
     streamCount: number,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.PACK, PackEvents.UPDATE_PACK, {
       packId,
@@ -76,7 +76,7 @@ export function usePackTracking() {
   const trackDeletePack = useCallback((
     packId: string,
     packTitle: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.PACK, PackEvents.DELETE_PACK, {
       packId,
@@ -104,7 +104,7 @@ export function usePackTracking() {
     packTitle: string,
     streamCount: number,
     isOwner: boolean,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.PACK, PackEvents.VIEW_PACK, {
       packId,
@@ -132,7 +132,7 @@ export function usePackTracking() {
     packId: string,
     packTitle: string,
     method: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.PACK, PackEvents.SHARE_PACK, {
       packId,
@@ -161,7 +161,7 @@ export function usePackTracking() {
     packTitle: string,
     channel: string,
     newCount: number,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.PACK, PackEvents.ADD_TO_PACK, {
       packId,
@@ -191,7 +191,7 @@ export function usePackTracking() {
     packTitle: string,
     channel: string,
     newCount: number,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.PACK, PackEvents.REMOVE_FROM_PACK, {
       packId,
@@ -219,7 +219,7 @@ export function usePackTracking() {
     operation: string,
     errorMessage: string,
     packId?: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.PACK, PackEvents.PACK_ERROR, {
       operation,

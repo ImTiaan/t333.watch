@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, verifyPremiumStatusCached } from '@/middleware/auth';
-import analytics from '@/lib/analytics';
+import analytics, { EventCategory, FeatureEvents } from '@/lib/analytics';
 
 /**
  * GET /api/premium/verify

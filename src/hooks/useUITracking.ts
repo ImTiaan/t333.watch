@@ -20,7 +20,7 @@ export function useUITracking() {
    */
   const trackModalOpen = useCallback((
     modalName: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.UI, UIEvents.MODAL_OPEN, {
       modalName,
@@ -43,7 +43,7 @@ export function useUITracking() {
   const trackModalClose = useCallback((
     modalName: string,
     duration?: number,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.UI, UIEvents.MODAL_CLOSE, {
       modalName,
@@ -65,7 +65,7 @@ export function useUITracking() {
    */
   const trackSidebarOpen = useCallback((
     sidebarName: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.UI, UIEvents.SIDEBAR_OPEN, {
       sidebarName,
@@ -88,7 +88,7 @@ export function useUITracking() {
   const trackSidebarClose = useCallback((
     sidebarName: string,
     duration?: number,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.UI, UIEvents.SIDEBAR_CLOSE, {
       sidebarName,
@@ -112,7 +112,7 @@ export function useUITracking() {
   const trackThemeChange = useCallback((
     theme: string,
     previousTheme: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.UI, UIEvents.THEME_CHANGE, {
       theme,
@@ -136,7 +136,7 @@ export function useUITracking() {
   const trackLayoutChange = useCallback((
     layout: string,
     previousLayout: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.UI, UIEvents.LAYOUT_CHANGE, {
       layout,
@@ -158,7 +158,7 @@ export function useUITracking() {
    */
   const trackTooltipView = useCallback((
     tooltipId: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.UI, UIEvents.TOOLTIP_VIEW, {
       tooltipId,
@@ -179,7 +179,7 @@ export function useUITracking() {
    */
   const trackDropdownOpen = useCallback((
     dropdownId: string,
-    properties?: Record<string, unknown>
+    properties?: Record<string, any>
   ) => {
     analytics.trackEvent(EventCategory.UI, UIEvents.DROPDOWN_OPEN, {
       dropdownId,

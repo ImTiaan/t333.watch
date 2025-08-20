@@ -72,7 +72,7 @@ export default function CancellationModal({ isOpen, onClose, onConfirm, isLoadin
                   Why are you canceling?
                 </h3>
                 <p className="text-gray-400 text-sm mb-4">
-                  Help us improve by letting us know why you&apos;re leaving.
+                  Help us improve by letting us know why you're leaving.
                 </p>
               </div>
 
@@ -159,7 +159,7 @@ export default function CancellationModal({ isOpen, onClose, onConfirm, isLoadin
                   Confirm Cancellation
                 </h3>
                 <p className="text-gray-400 text-sm mb-4">
-                  Choose when you&apos;d like your subscription to end.
+                  Choose when you'd like your subscription to end.
                 </p>
               </div>
 
@@ -199,7 +199,7 @@ export default function CancellationModal({ isOpen, onClose, onConfirm, isLoadin
 
               <div className="bg-red-900/20 border border-red-700 rounded-lg p-4 mt-4">
                 <p className="text-red-300 text-sm">
-                  <strong>Warning:</strong> This action cannot be undone. You&apos;ll need to create a new subscription to regain access to premium features.
+                  <strong>Warning:</strong> This action cannot be undone. You'll need to create a new subscription to regain access to premium features.
                 </p>
               </div>
 

@@ -59,8 +59,17 @@ function logPerformanceMetric(
     durationStyle = 'color: orange; font-weight: bold';
   }
   
+  // Determine payload style based on size
+  let payloadStyle = 'color: green';
+  if (responseSize > PERFORMANCE_THRESHOLDS.PAYLOAD_SIZE.CRITICAL) {
+    payloadStyle = 'color: red; font-weight: bold';
+  } else if (responseSize > PERFORMANCE_THRESHOLDS.PAYLOAD_SIZE.WARNING) {
+    payloadStyle = 'color: orange; font-weight: bold';
+  }
+  
   // Format the log message
   const timestamp = new Date().toISOString();
+  const statusStyle = statusCode >= 400 ? 'color: red; font-weight: bold' : 'color: green';
   
   // Create the log message
   const message = `[${timestamp}] ${method} ${path} ${statusCode}`;

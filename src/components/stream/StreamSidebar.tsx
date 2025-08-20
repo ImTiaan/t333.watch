@@ -15,7 +15,7 @@ interface StreamSidebarProps {
  * Contains a form for adding streams and a list of followed channels
  */
 export default function StreamSidebar({ isOpen, onToggle, onAddStream }: StreamSidebarProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [newChannel, setNewChannel] = useState('');
 
   const handleAddStream = () => {
