@@ -1,7 +1,7 @@
 import { Metadata, ResolvingMetadata } from 'next';
 
 interface Props {
-  params: object;
+  params: {};
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
@@ -55,7 +55,7 @@ export async function generateMetadata(
     const pack = data.pack;
     
     // Extract streams from the pack
-    const streams = pack.pack_streams?.map((s: any) => s.twitch_channel) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const streams = pack.pack_streams?.map((s: any) => s.twitch_channel) || [];
     
     // Generate a description that includes stream names if available
     const description = streams && streams.length > 0

@@ -335,7 +335,7 @@ export default function SubscriptionPage() {
               <div className="bg-gray-700 rounded-lg p-4 mt-4">
                 <h3 className="text-lg font-medium mb-3">Cancel Subscription</h3>
                 <p className="text-gray-400 mb-4 text-sm">
-                  Need to cancel your subscription? We&apos;re sorry to see you go.
+                  Need to cancel your subscription? We're sorry to see you go.
                 </p>
                 <button
                   onClick={() => setShowCancellationModal(true)}

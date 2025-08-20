@@ -34,7 +34,7 @@ async function getAuthenticatedUser() {
     let user = null;
     try {
       user = await getUser(userInfo.id);
-    } catch {
+    } catch (error) {
       // User doesn't exist in the database yet, create them
       try {
         user = await createUser({
