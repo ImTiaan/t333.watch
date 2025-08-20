@@ -2,10 +2,26 @@ import { cookies } from 'next/headers';
 import { twitchApi } from '@/lib/twitch-api';
 import { getUser, getPublicPacks, createUser, supabase } from '@/lib/supabase';
 import DiscoverPageClient from '@/components/packs/DiscoverPageClient';
+import type { Metadata } from 'next';
 
 // Force dynamic rendering because this page uses cookies
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
+
+export const metadata: Metadata = {
+  title: 'Discover Stream Packs | t333.watch - Multi-Stream Viewer',
+  description: 'Discover and explore curated stream packs on t333.watch. Find the best multi-stream viewing experiences for Twitch roleplay, esports, and collaborative content.',
+  keywords: 'discover streams, stream packs, Twitch collections, multi-stream discovery, curated content, roleplay streams, esports viewing',
+  openGraph: {
+    title: 'Discover Stream Packs | t333.watch',
+    description: 'Discover and explore curated stream packs for the ultimate multi-stream viewing experience.',
+    type: 'website',
+  },
+  twitter: {
+    title: 'Discover Stream Packs | t333.watch',
+    description: 'Discover and explore curated stream packs for the ultimate multi-stream viewing experience.',
+  },
+};
 
 async function getAuthenticatedUser() {
   try {
@@ -43,6 +59,7 @@ async function getAuthenticatedUser() {
       try {
         user = await createUser({
           twitch_id: userInfo.id,
+          login: userInfo.login,
           display_name: userInfo.display_name,
           premium_flag: false,
         });
