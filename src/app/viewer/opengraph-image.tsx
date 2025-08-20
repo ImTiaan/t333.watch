@@ -32,14 +32,25 @@ export default async function Image(req: NextRequest) {
               padding: '40px',
             }}
           >
+            {/* Logo */}
             <div
               style={{
-                fontSize: '48px',
-                fontWeight: 'bold',
-                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '20px',
               }}
             >
-              t333.watch
+              {/* Using the t3logo.png image */}
+              <img
+                src={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/t3logo.png`}
+                width="240"
+                height="80"
+                alt="t333.watch"
+                style={{
+                  height: '80px',
+                  width: 'auto',
+                }}
+              />
             </div>
             <div
               style={{
@@ -241,14 +252,25 @@ export default async function Image(req: NextRequest) {
             padding: '40px',
           }}
         >
+          {/* Logo */}
           <div
             style={{
-              fontSize: '48px',
-              fontWeight: 'bold',
-              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '20px',
             }}
           >
-            t333.watch
+            {/* Using the t3logo.png image */}
+            <img
+              src={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/t3logo.png`}
+              width="240"
+              height="80"
+              alt="t333.watch"
+              style={{
+                height: '80px',
+                width: 'auto',
+              }}
+            />
           </div>
           <div
             style={{
