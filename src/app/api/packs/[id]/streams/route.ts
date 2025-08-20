@@ -29,7 +29,7 @@ async function getAuthenticatedUser(request: NextRequest) {
     let user = null;
     try {
       user = await getUser(userInfo.id);
-    } catch (error) {
+    } catch {
       // User doesn't exist, create a new one
       try {
         user = await createUser({
