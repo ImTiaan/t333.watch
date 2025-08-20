@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and API routes
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /auth/
+
+# Allow important pages for SEO
+Allow: /
+Allow: /discover
+Allow: /viewer
+Allow: /packs/
+
+# Sitemap location
+Sitemap: https://t333.watch/sitemap.xml
+
+# Crawl delay (optional, helps prevent overloading)
+Crawl-delay: 1
