@@ -46,8 +46,8 @@ declare global {
           };
         }
       ) => {
-        addEventListener: (event: string, callback: (...args: unknown[]) => void) => void;
-        removeEventListener: (event: string, callback: (...args: unknown[]) => void) => void;
+        addEventListener: (event: string, callback: Function) => void;
+        removeEventListener: (event: string, callback: Function) => void;
         getPlayer: () => {
           setMuted: (muted: boolean) => void;
           getMuted: () => boolean;
@@ -69,7 +69,7 @@ interface Stream {
   channel: string;
   muted: boolean;
   playerId: string;
-  embed?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  embed?: any;
   isPrimary?: boolean;
 }
 

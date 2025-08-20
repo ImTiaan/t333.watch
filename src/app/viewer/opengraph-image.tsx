@@ -65,7 +65,7 @@ export default async function Image(req: NextRequest) {
     const pack = data.pack;
     
     // Extract streams from the pack
-    const streams = pack.pack_streams?.map((s: any) => s.twitch_channel) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const streams = pack.pack_streams?.map((s: any) => s.twitch_channel) || [];
     
     // Generate the image
     return new ImageResponse(
