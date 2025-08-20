@@ -134,7 +134,7 @@ export default function Dashboard() {
             </div>
           ) : packs.length === 0 ? (
             <div className="text-gray-400 text-center py-8">
-              You haven't created any packs yet.
+              You haven&apos;t created any packs yet.
             </div>
           ) : (
             <div className="space-y-4 mb-4">

@@ -1,13 +1,12 @@
 'use client';
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function Home() {
-  const { isAuthenticated, isLoading, user, login, logout } = useAuth();
+  const { isAuthenticated, isLoading, login } = useAuth();
   const router = useRouter();
 
   // Redirect to dashboard if already authenticated

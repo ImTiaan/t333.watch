@@ -54,7 +54,7 @@ async function getAuthenticatedUser() {
         // Update the local user object
         user.profile_image_url = userInfo.profile_image_url;
       }
-    } catch (error) {
+    } catch {
       // User doesn't exist in the database yet, create them
       try {
         user = await createUser({

@@ -40,7 +40,7 @@ async function getAuthenticatedUser(request: NextRequest) {
         // Update the local user object
         user.profile_image_url = userInfo.profile_image_url;
       }
-    } catch (error) {
+    } catch {
       // User doesn't exist, create a new one
       user = await createUser({
           twitch_id: userInfo.id,

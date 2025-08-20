@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { supabase } from '@/lib/supabase';
+
 import { clearPremiumStatusCache } from '@/middleware/auth';
 import analytics from '@/lib/analytics';
 import { config } from '@/lib/config';
