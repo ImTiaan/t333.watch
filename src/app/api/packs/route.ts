@@ -43,11 +43,12 @@ async function getAuthenticatedUser(request: NextRequest) {
     } catch (error) {
       // User doesn't exist, create a new one
       user = await createUser({
-        twitch_id: userInfo.id,
-        display_name: userInfo.display_name,
-        premium_flag: false,
-        profile_image_url: userInfo.profile_image_url,
-      });
+          twitch_id: userInfo.id,
+          login: userInfo.login,
+          display_name: userInfo.display_name,
+          premium_flag: false,
+          profile_image_url: userInfo.profile_image_url,
+        });
     }
     
     return user;

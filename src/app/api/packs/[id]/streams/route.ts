@@ -34,6 +34,7 @@ async function getAuthenticatedUser(request: NextRequest) {
       try {
         user = await createUser({
           twitch_id: userInfo.id,
+          login: userInfo.login,
           display_name: userInfo.display_name,
           premium_flag: false,
         });
