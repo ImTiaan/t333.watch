@@ -18,14 +18,14 @@ export default function Home() {
   }, [isAuthenticated, isLoading, router]);
 
   return (
-    <main>
+    <div>
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 flex flex-col items-center text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-6">
+      <div className="container mx-auto px-4 py-16 flex flex-col items-center text-center">
+        <h2 className="text-4xl md:text-5xl font-bold mb-6">
           Watch Multiple Twitch Streams <span className="text-[#9146FF]">Simultaneously</span>
-        </h1>
+        </h2>
         <p className="text-xl text-gray-300 max-w-3xl mb-10">
-          t333.watch is the ultimate multi-stream viewer for Twitch. Watch multiple perspectives simultaneously — live or synchronized VODs — with customizable stream packs you can save, share, and discover.
+          t333.watch is what happens when Twitch gets superpowers. It feels native, but lets you watch multiple perspectives — live or in sync — with Packs you can save, share, and discover.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <button onClick={login} className="twitch-button text-lg px-8 py-3">
@@ -37,18 +37,18 @@ export default function Home() {
         </div>
 
         {/* Feature Highlights */}
-        <section className="grid md:grid-cols-3 gap-8 mt-20" aria-label="Key Features">
-          <article className="bg-[#18181b] p-6 rounded-lg border border-[#2d2d3a]">
-            <div className="bg-[#9146FF] w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto" aria-hidden="true">
+        <div className="grid md:grid-cols-3 gap-8 mt-20">
+          <div className="bg-[#18181b] p-6 rounded-lg border border-[#2d2d3a]">
+            <div className="bg-[#9146FF] w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold mb-2 text-center">Multi-Stream Viewer</h2>
+            <h3 className="text-xl font-bold mb-2 text-center">Multi-Stream Viewer</h3>
             <p className="text-gray-400 text-center">
-              Watch up to 3 Twitch streams simultaneously for free, or upgrade to premium for unlimited multi-stream viewing with advanced synchronization features.
+              Watch up to 3 streams for free, or upgrade to premium for unlimited streams.
             </p>
-          </article>
+          </div>
           <div className="bg-[#18181b] p-6 rounded-lg border border-[#2d2d3a]">
             <div className="bg-[#9146FF] w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -71,11 +71,11 @@ export default function Home() {
               Synchronize VODs for perfect multi-perspective playback of past events.
             </p>
           </div>
-        </section>
-      </section>
+        </div>
+      </div>
 
       {/* About section */}
-      <section className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16">
         <div className="bg-[#18181b] rounded-lg p-6 border border-[#2d2d3a]">
           <h2 className="text-xl font-bold mb-4">About t333.watch</h2>
           <p className="text-gray-300 mb-4">
@@ -112,7 +112,7 @@ export default function Home() {
             </div>
           )}
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }
