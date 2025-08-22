@@ -72,6 +72,7 @@ export async function getAuthenticatedUser(request: NextRequest): Promise<AuthRe
           login: userInfo.login,
           display_name: userInfo.display_name,
           premium_flag: false,
+          admin_flag: false,
           profile_image_url: userInfo.profile_image_url,
         });
         console.log('Created new user in database:', userInfo.id);
