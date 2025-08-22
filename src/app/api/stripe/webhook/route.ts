@@ -130,9 +130,72 @@ export async function POST(request: NextRequest) {
         break;
       }
       
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as Stripe.Subscription;
+        
+        // Only handle when subscription is cancelled but still active (cancel_at_period_end = true)
+        if (subscription.cancel_at_period_end && subscription.status === 'active') {
+          console.log(`Subscription ${subscription.id} cancelled but still active until period end`);
+          
+          // Get the customer ID
+          const customerId = subscription.customer as string;
+          
+          // Find the user with this customer ID
+          try {
+            const { data, error } = await supabase
+              .from('users')
+              .select('*')
+              .eq('stripe_customer_id', customerId)
+              .single();
+            
+            if (error || !data) {
+              console.error('Error finding user with customer ID:', customerId, error);
+              return NextResponse.json(
+                { error: 'User not found' },
+                { status: 404 }
+              );
+            }
+            
+            // Track subscription cancellation in analytics (but don't revoke access yet)
+            try {
+              await trackSubscriptionCancelled(
+                data.id,
+                subscription.id,
+                'Premium',
+                {
+                  twitchId: data.twitch_id,
+                  customerId,
+                  canceledAt: subscription.canceled_at,
+                  periodEnd: (subscription as any).current_period_end
+                }
+              );
+              
+              // Update retention tracking for cancelled subscription
+              await updateUserRetentionOnCancellation(
+                data.id,
+                subscription.id,
+                subscription.cancellation_details?.reason || 'user_cancelled'
+              );
+            } catch (error) {
+              console.error('Failed to track subscription cancellation:', error);
+            }
+            
+            console.log(`User ${data.twitch_id} cancelled subscription but retains access until ${new Date((subscription as any).current_period_end * 1000)}`);
+           } catch (error) {
+             console.error('Error handling subscription updated event:', error);
+             return NextResponse.json(
+               { error: 'Error handling subscription updated event' },
+               { status: 500 }
+             );
+           }
+         }
+         break;
+       }
+      
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         
+        // This event fires when the subscription actually expires/ends
         // Get the customer ID
         const customerId = subscription.customer as string;
         
@@ -153,7 +216,7 @@ export async function POST(request: NextRequest) {
             );
           }
           
-          // Update the user's premium status
+          // Update the user's premium status - NOW revoke access
           await updateUser(data.id, {
             premium_flag: false,
           });
@@ -165,33 +228,11 @@ export async function POST(request: NextRequest) {
           analytics.trackFeatureUsage('premium_deactivated', {
             userId: data.id,
             twitchId: data.twitch_id,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            reason: 'subscription_expired'
           });
           
-          // Track subscription cancellation in analytics
-          try {
-            await trackSubscriptionCancelled(
-              data.id,
-              subscription.id,
-              'Premium',
-              {
-                twitchId: data.twitch_id,
-                customerId,
-                canceledAt: subscription.canceled_at
-              }
-            );
-            
-            // Update retention tracking for cancelled subscription
-            await updateUserRetentionOnCancellation(
-              data.id,
-              subscription.id,
-              subscription.cancellation_details?.reason || 'user_cancelled'
-            );
-          } catch (error) {
-            console.error('Failed to track subscription cancellation:', error);
-          }
-          
-          console.log(`User ${data.twitch_id} is no longer premium`);
+          console.log(`User ${data.twitch_id} subscription expired - premium access revoked`);
         } catch (error) {
           console.error('Error handling subscription deleted event:', error);
           return NextResponse.json(
