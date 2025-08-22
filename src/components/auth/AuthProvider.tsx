@@ -9,13 +9,14 @@ import analytics, { EventCategory, AuthEvents } from '@/lib/analytics';
 
 // Define the user type
 export interface TwitchUser {
-  id: string;
+  id: string; // Twitch ID
   login: string;
   display_name: string;
   profile_image_url: string;
   email?: string;
   premium_flag?: boolean;
   admin_flag?: boolean;
+  database_id?: string; // Database UUID for tracking
 }
 
 // Define the auth context type
@@ -76,15 +77,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Try to get existing user
           const dbUser = await getUser(userInfo.id);
           console.log('User already exists in Supabase');
-          // Add premium and admin flags to user info
+          // Add premium, admin flags and database ID to user info
           (userInfo as TwitchUser).premium_flag = dbUser.premium_flag;
           (userInfo as TwitchUser).admin_flag = dbUser.admin_flag;
+          (userInfo as TwitchUser).database_id = dbUser.id;
           console.log('User premium status:', dbUser.premium_flag);
           console.log('User admin status:', dbUser.admin_flag);
         } catch (error) {
           // User doesn't exist, create a new one
           try {
-            await createUser({
+            const newUser = await createUser({
               twitch_id: userInfo.id,
               login: userInfo.login,
               display_name: userInfo.display_name,
@@ -93,9 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               profile_image_url: userInfo.profile_image_url,
             });
             console.log('Created new user in Supabase');
-            // New user is not premium or admin
+            // New user is not premium or admin, but has database ID
             (userInfo as TwitchUser).premium_flag = false;
             (userInfo as TwitchUser).admin_flag = false;
+            (userInfo as TwitchUser).database_id = newUser.id;
           } catch (createError) {
             console.error('Error creating user in Supabase:', createError);
             // Continue anyway - we'll try again next time
@@ -154,26 +157,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // Try to get existing user
               const dbUser = await getUser(userInfo.id);
               console.log('User already exists in Supabase');
-              // Add premium and admin flags to user info
+              // Add premium, admin flags and database ID to user info
               (userInfo as TwitchUser).premium_flag = dbUser.premium_flag;
               (userInfo as TwitchUser).admin_flag = dbUser.admin_flag;
+              (userInfo as TwitchUser).database_id = dbUser.id;
               console.log('User premium status:', dbUser.premium_flag);
               console.log('User admin status:', dbUser.admin_flag);
             } catch (error) {
-              // User doesn't exist, create a new one
-              try {
-                await createUser({
-                  twitch_id: userInfo.id,
-                  login: userInfo.login,
-                  display_name: userInfo.display_name,
-                  premium_flag: false,
-                  admin_flag: false,
-                  profile_image_url: userInfo.profile_image_url,
-                });
-                console.log('Created new user in Supabase');
-                // New user is not premium or admin
-                (userInfo as TwitchUser).premium_flag = false;
-                (userInfo as TwitchUser).admin_flag = false;
+                // User doesn't exist, create a new one
+                try {
+                  const newUser = await createUser({
+                    twitch_id: userInfo.id,
+                    login: userInfo.login,
+                    display_name: userInfo.display_name,
+                    premium_flag: false,
+                    admin_flag: false,
+                    profile_image_url: userInfo.profile_image_url,
+                  });
+                  console.log('Created new user in Supabase');
+                  // New user is not premium or admin, but has database ID
+                  (userInfo as TwitchUser).premium_flag = false;
+                  (userInfo as TwitchUser).admin_flag = false;
+                  (userInfo as TwitchUser).database_id = newUser.id;
               } catch (createError) {
                 console.error('Error creating user in Supabase:', createError);
                 // Continue anyway - we'll try again next time

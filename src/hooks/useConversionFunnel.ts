@@ -39,7 +39,7 @@ export function useConversionFunnel() {
     
     // Save to database for funnel analytics
     try {
-      await trackLandingPage(user?.id, {
+      await trackLandingPage(user?.database_id, {
         username: user?.display_name,
         isPremium: user?.premium_flag || false,
         isAuthenticated,
@@ -66,7 +66,7 @@ export function useConversionFunnel() {
     
     // Save to database for funnel analytics
     try {
-      await trackViewPricing(user?.id, {
+      await trackViewPricing(user?.database_id, {
         username: user?.display_name,
         isPremium: user?.premium_flag || false,
         isAuthenticated,
@@ -100,9 +100,9 @@ export function useConversionFunnel() {
     });
     
     // Save to database for funnel analytics
-    if (user?.id) {
+    if (user?.database_id) {
       try {
-        await trackFunnelCheckoutStart(user.id, planId, planName, {
+        await trackFunnelCheckoutStart(user.database_id, planId, planName, {
           price,
           username: user.display_name,
           isPremium: user.premium_flag || false,
@@ -133,9 +133,9 @@ export function useConversionFunnel() {
     });
     
     // Save to database for funnel analytics
-    if (user?.id) {
+    if (user?.database_id) {
       try {
-        await trackPaymentInfo(user.id, planId, {
+        await trackPaymentInfo(user.database_id, planId, {
           username: user.display_name,
           isPremium: user.premium_flag || false,
           ...properties
@@ -169,9 +169,9 @@ export function useConversionFunnel() {
     });
     
     // Save to database for funnel analytics
-    if (user?.id) {
+    if (user?.database_id) {
       try {
-        await trackCompletePurchase(user.id, planId, planName, amount, {
+        await trackCompletePurchase(user.database_id, planId, planName, amount, {
           username: user.display_name,
           ...properties
         });
@@ -203,7 +203,7 @@ export function useConversionFunnel() {
     
     // Save to database for funnel analytics
     try {
-      await trackAbandonedCheckout(user?.id, planId, step, {
+      await trackAbandonedCheckout(user?.database_id, planId, step, {
         username: user?.display_name,
         isPremium: user?.premium_flag || false,
         isAuthenticated,
