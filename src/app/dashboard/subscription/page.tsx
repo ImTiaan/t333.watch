@@ -65,6 +65,15 @@ interface SubscriptionHistory {
   }>;
 }
 
+interface CurrentSubscription {
+  id: string;
+  status: string;
+  current_period_start: number;
+  current_period_end: number;
+  plan: 'monthly' | 'yearly';
+  cancel_at_period_end: boolean;
+}
+
 export default function SubscriptionPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -75,6 +84,8 @@ export default function SubscriptionPage() {
   const [isModifyingSubscription, setIsModifyingSubscription] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
   
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -83,12 +94,38 @@ export default function SubscriptionPage() {
     }
   }, [isLoading, isAuthenticated, router]);
 
+  // Load current subscription info
+  useEffect(() => {
+    if (isAuthenticated && user && user.premium_flag) {
+      loadCurrentSubscription();
+    }
+  }, [isAuthenticated, user]);
+
   // Load subscription history
   useEffect(() => {
     if (isAuthenticated && user && activeTab !== 'overview') {
       loadSubscriptionHistory();
     }
   }, [isAuthenticated, user, activeTab]);
+
+  const loadCurrentSubscription = async () => {
+    if (!user) return;
+    
+    setIsLoadingSubscription(true);
+    try {
+      const response = await fetch('/api/stripe/modify-subscription');
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentSubscription(data.currentSubscription);
+      } else {
+        console.error('Failed to load current subscription');
+      }
+    } catch (error) {
+      console.error('Error loading current subscription:', error);
+    } finally {
+      setIsLoadingSubscription(false);
+    }
+  };
 
   const loadSubscriptionHistory = async () => {
     if (isLoadingHistory) return;
@@ -294,55 +331,61 @@ export default function SubscriptionPage() {
         
         {hasPremium ? (
             <div>
-              <p className="text-gray-300 mb-4">
-                You have access to all premium features. Thank you for supporting t333.watch!
-              </p>
-              <div className="flex space-x-3 mb-4">
-                <button
-                  onClick={handleManageSubscription}
-                  disabled={isCreatingPortal}
-                  className="px-4 py-2 bg-[#9146FF] hover:bg-[#7a3dd3] text-white font-medium rounded transition-colors disabled:opacity-50"
-                >
-                  {isCreatingPortal ? 'Loading...' : 'Manage Subscription'}
-                </button>
+              <div className="space-y-2 mb-4">
+                <p className="text-gray-300">
+                  You have access to all premium features. Thank you for supporting t333.watch!
+                </p>
+                {currentSubscription && (
+                  <div className="text-sm text-gray-400">
+                    <p>Current Plan: <span className="text-white font-medium">
+                      {currentSubscription.plan === 'monthly' ? 'Monthly Premium' : 'Yearly Premium'}
+                    </span></p>
+                    <p>Next billing: {formatDate(currentSubscription.current_period_end * 1000)}</p>
+                    {currentSubscription.cancel_at_period_end && (
+                      <p className="text-yellow-400">Subscription will cancel at period end</p>
+                    )}
+                  </div>
+                )}
               </div>
               
               {/* Plan Change Options */}
-              <div className="bg-gray-700 rounded-lg p-4 mt-4">
-                <h3 className="text-lg font-medium mb-3">Change Plan</h3>
-                <p className="text-gray-400 mb-4 text-sm">
-                  Switch between monthly and yearly billing. Changes will be reflected in your next billing cycle.
-                </p>
-                <div className="flex space-x-3">
+              {currentSubscription && (
+                <div className="bg-gray-700 rounded-lg p-4 mt-4">
+                  <h3 className="text-lg font-medium mb-3">Change Plan</h3>
+                  <p className="text-gray-400 mb-4 text-sm">
+                    Switch to {currentSubscription.plan === 'monthly' ? 'yearly' : 'monthly'} billing. Changes will be reflected in your next billing cycle.
+                  </p>
                   <button
-                    onClick={() => handlePlanChange('monthly')}
+                    onClick={() => handlePlanChange(currentSubscription.plan === 'monthly' ? 'yearly' : 'monthly')}
                     disabled={isModifyingSubscription}
                     className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
-                    {isModifyingSubscription ? 'Updating...' : 'Switch to Monthly'}
-                  </button>
-                  <button
-                    onClick={() => handlePlanChange('yearly')}
-                    disabled={isModifyingSubscription}
-                    className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                  >
-                    {isModifyingSubscription ? 'Updating...' : 'Switch to Yearly'}
+                    {isModifyingSubscription ? 'Updating...' : `Switch to ${currentSubscription.plan === 'monthly' ? 'Yearly' : 'Monthly'}`}
                   </button>
                 </div>
-              </div>
+              )}
               
-              {/* Cancel Subscription */}
+              {/* Subscription Management */}
               <div className="bg-gray-700 rounded-lg p-4 mt-4">
-                <h3 className="text-lg font-medium mb-3">Cancel Subscription</h3>
+                <h3 className="text-lg font-medium mb-3">Subscription Management</h3>
                 <p className="text-gray-400 mb-4 text-sm">
-                  Need to cancel your subscription? We're sorry to see you go.
+                  Manage your billing information, payment methods, or cancel your subscription.
                 </p>
-                <button
-                  onClick={() => setShowCancellationModal(true)}
-                  className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-                >
-                  Cancel Subscription
-                </button>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={isCreatingPortal}
+                    className="px-3 py-2 bg-[#9146FF] hover:bg-[#7a3dd3] text-white rounded transition-colors disabled:opacity-50 text-sm"
+                  >
+                    {isCreatingPortal ? 'Loading...' : 'Manage Billing'}
+                  </button>
+                  <button
+                    onClick={() => setShowCancellationModal(true)}
+                    className="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
+                  >
+                    Cancel Subscription
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
