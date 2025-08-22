@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useConversionFunnel } from "@/hooks/useConversionFunnel";
 
 export default function Home() {
   const { isAuthenticated, isLoading, user, login, logout } = useAuth();
   const router = useRouter();
+  const { trackLanding, trackPricing } = useConversionFunnel();
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -16,6 +18,17 @@ export default function Home() {
       router.push('/dashboard');
     }
   }, [isAuthenticated, isLoading, router]);
+  
+  // Track landing page visit
+  useEffect(() => {
+    if (!isLoading) {
+      trackLanding({
+        source: 'home_page',
+        userType: isAuthenticated ? 'authenticated' : 'anonymous',
+        referrer: document.referrer || 'direct'
+      });
+    }
+  }, [isLoading, isAuthenticated, trackLanding]);
 
   return (
     <div>
@@ -28,7 +41,16 @@ export default function Home() {
           t333.watch is what happens when Twitch gets superpowers. It feels native, but lets you watch multiple perspectives — live or in sync — with Packs you can save, share, and discover.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <button onClick={login} className="twitch-button text-lg px-8 py-3">
+          <button 
+            onClick={() => {
+              trackPricing({
+                source: 'home_cta',
+                userType: 'anonymous'
+              });
+              login();
+            }} 
+            className="twitch-button text-lg px-8 py-3"
+          >
             Get Started
           </button>
           <Link href="/about" className="twitch-button-secondary text-lg px-8 py-3">

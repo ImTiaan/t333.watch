@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import CreatePackButton from '@/components/packs/CreatePackButton';
 import PackCard from '@/components/packs/PackCard';
 import { isPremium } from '@/lib/premium';
+import { useConversionFunnel } from '@/hooks/useConversionFunnel';
 
 // Define the Pack type
 interface Stream {
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [packs, setPacks] = useState<Pack[]>([]);
   const [isLoadingPacks, setIsLoadingPacks] = useState(false);
+  const { trackLanding } = useConversionFunnel();
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -40,6 +42,17 @@ export default function Dashboard() {
       router.push('/');
     }
   }, [isLoading, isAuthenticated, router]);
+
+  // Track landing page visit
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      trackLanding({
+        source: 'dashboard',
+        userType: isPremium(user) ? 'premium' : 'free',
+        referrer: document.referrer || 'direct'
+      });
+    }
+  }, [isLoading, isAuthenticated, user, trackLanding]);
 
   // Fetch user's packs
   useEffect(() => {

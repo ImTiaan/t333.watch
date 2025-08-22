@@ -13,6 +13,7 @@ export type Database = {
           login: string;
           display_name: string;
           premium_flag: boolean;
+          admin_flag: boolean;
           stripe_customer_id: string | null;
           profile_image_url: string | null;
           created_at: string;
@@ -24,6 +25,7 @@ export type Database = {
           login: string;
           display_name: string;
           premium_flag?: boolean;
+          admin_flag?: boolean;
           stripe_customer_id?: string | null;
           profile_image_url?: string | null;
           created_at?: string;
@@ -35,6 +37,7 @@ export type Database = {
           login?: string;
           display_name?: string;
           premium_flag?: boolean;
+          admin_flag?: boolean;
           stripe_customer_id?: string | null;
           profile_image_url?: string | null;
           created_at?: string;

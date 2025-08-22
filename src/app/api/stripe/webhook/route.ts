@@ -3,6 +3,20 @@ import Stripe from 'stripe';
 import { updateUser, getUser, supabase } from '@/lib/supabase';
 import { clearPremiumStatusCache } from '@/middleware/auth';
 import analytics from '@/lib/analytics';
+import {
+  trackSubscriptionCreated,
+  trackSubscriptionCancelled,
+  trackPaymentSucceeded,
+  trackPaymentFailed
+} from '@/lib/subscription-analytics';
+import {
+  trackCompletePurchase,
+  trackPaymentInfo
+} from '@/lib/conversion-funnel';
+import {
+  initializeUserRetentionTracking,
+  updateUserRetentionOnCancellation
+} from '@/lib/retention-analytics';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -74,6 +88,44 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString()
         });
         
+        // Track subscription creation in analytics
+        try {
+          await trackSubscriptionCreated(
+            userId,
+            session.subscription as string,
+            session.metadata?.plan_name || 'Premium',
+            {
+              twitchId,
+              amount: session.amount_total || 0,
+              currency: session.currency || 'usd',
+              sessionId: session.id
+            }
+          );
+          
+          // Track purchase completion in conversion funnel
+          await trackCompletePurchase(
+            userId,
+            session.metadata?.plan_id || 'premium',
+            session.metadata?.plan_name || 'Premium',
+            (session.amount_total || 0) / 100, // Convert from cents to dollars
+            {
+              sessionId: session.id,
+              subscriptionId: session.subscription as string,
+              paymentMethod: session.payment_method_types?.[0] || 'unknown'
+            }
+          );
+          
+          // Initialize retention tracking for new subscription
+          await initializeUserRetentionTracking(
+            userId,
+            session.subscription as string,
+            new Date(),
+            session.amount_total || 0
+          );
+        } catch (error) {
+          console.error('Failed to track subscription creation:', error);
+        }
+        
         console.log(`User ${twitchId} is now premium`);
         break;
       }
@@ -116,6 +168,29 @@ export async function POST(request: NextRequest) {
             timestamp: new Date().toISOString()
           });
           
+          // Track subscription cancellation in analytics
+          try {
+            await trackSubscriptionCancelled(
+              data.id,
+              subscription.id,
+              'Premium',
+              {
+                twitchId: data.twitch_id,
+                customerId,
+                canceledAt: subscription.canceled_at
+              }
+            );
+            
+            // Update retention tracking for cancelled subscription
+            await updateUserRetentionOnCancellation(
+              data.id,
+              subscription.id,
+              subscription.cancellation_details?.reason || 'user_cancelled'
+            );
+          } catch (error) {
+            console.error('Failed to track subscription cancellation:', error);
+          }
+          
           console.log(`User ${data.twitch_id} is no longer premium`);
         } catch (error) {
           console.error('Error handling subscription deleted event:', error);
@@ -123,6 +198,73 @@ export async function POST(request: NextRequest) {
             { error: 'Error handling subscription deleted event' },
             { status: 500 }
           );
+        }
+        break;
+      }
+      
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice;
+        
+        // Find the user with this customer ID
+        try {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('stripe_customer_id', invoice.customer as string)
+            .single();
+          
+          if (!error && data) {
+               // Track successful payment
+                await trackPaymentSucceeded(
+                  data.id,
+                  (invoice.amount_paid || 0) / 100, // Convert from cents to dollars
+                  undefined, // planId
+                  'Premium', // planName
+                  undefined, // stripePaymentIntentId
+                  undefined, // stripeSubscriptionId - not available on invoice
+                  {
+                    twitchId: data.twitch_id,
+                    invoiceId: invoice.id,
+                    invoiceNumber: invoice.number || undefined,
+                    currency: invoice.currency || 'usd'
+                  }
+                );
+             }
+        } catch (error) {
+          console.error('Failed to track payment success:', error);
+        }
+        break;
+      }
+      
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        
+        // Find the user with this customer ID
+        try {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('stripe_customer_id', invoice.customer as string)
+            .single();
+          
+          if (!error && data) {
+            // Track failed payment
+             await trackPaymentFailed(
+               data.id,
+               'payment_failed',
+               'Invoice payment failed',
+               undefined,
+               'Premium',
+               {
+                 twitchId: data.twitch_id,
+                 invoiceId: invoice.id,
+                 amount: (invoice.amount_due || 0) / 100, // Convert from cents to dollars
+                 currency: invoice.currency || 'usd'
+               }
+             );
+          }
+        } catch (error) {
+          console.error('Failed to track payment failure:', error);
         }
         break;
       }

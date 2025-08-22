@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { isPremium } from '@/lib/premium';
 import { config } from '@/lib/config';
+import { useConversionFunnel } from '@/hooks/useConversionFunnel';
+import { useSubscriptionTracking } from '@/hooks/useSubscriptionTracking';
 
 export default function UpgradePage() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { trackPricing, trackCheckoutStart } = useConversionFunnel();
+  const { trackStartCheckout } = useSubscriptionTracking();
   
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -25,6 +29,16 @@ export default function UpgradePage() {
       router.push('/dashboard/subscription');
     }
   }, [isLoading, user, router]);
+  
+  // Track pricing page view
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      trackPricing({
+        source: 'upgrade_page',
+        userType: isPremium(user) ? 'premium' : 'free'
+      });
+    }
+  }, [isLoading, isAuthenticated, user, trackPricing]);
   
   const plans = {
     monthly: {
@@ -50,6 +64,21 @@ export default function UpgradePage() {
   const handleCheckout = async () => {
     try {
       setIsCheckingOut(true);
+      
+      const currentPlan = plans[selectedPlan];
+      const planId = `premium_${selectedPlan}`;
+      const planName = `Premium ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}`;
+      
+      // Track checkout start in both systems
+      await trackCheckoutStart(planId, planName, currentPlan.price, {
+        billing_interval: selectedPlan,
+        source: 'upgrade_page'
+      });
+      
+      await trackStartCheckout(planId, planName, currentPlan.price, {
+        billing_interval: selectedPlan,
+        source: 'upgrade_page'
+      });
       
       // Call the API to create a Stripe checkout session
       const response = await fetch('/api/stripe/create-checkout-session', {

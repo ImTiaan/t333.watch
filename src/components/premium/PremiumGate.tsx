@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Crown, Lock, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { useConversionFunnel } from '@/hooks/useConversionFunnel';
 
 interface PremiumGateProps {
   children: React.ReactNode;
@@ -98,9 +99,23 @@ export function PremiumUpgradePrompt({
   compact = false 
 }: PremiumUpgradePromptProps) {
   const { trackFeatureBlocked } = usePremiumFeatureTracking();
+  const { trackPricing } = useConversionFunnel();
 
   const handleUpgradeClick = () => {
     trackFeatureBlocked(feature || 'unknown', 'upgrade_clicked');
+    trackPricing({
+      source: 'premium_gate',
+      feature: feature || 'unknown',
+      userType: 'free'
+    });
+  };
+
+  const handleLearnMoreClick = () => {
+    trackPricing({
+      source: 'premium_gate_learn_more',
+      feature: feature || 'unknown',
+      userType: 'free'
+    });
   };
 
   if (compact) {
@@ -161,7 +176,11 @@ export function PremiumUpgradePrompt({
             </Button>
           </Link>
           <Link href="/dashboard/subscription">
-            <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50">
+            <Button 
+              variant="outline" 
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              onClick={handleLearnMoreClick}
+            >
               Learn More
             </Button>
           </Link>

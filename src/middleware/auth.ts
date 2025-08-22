@@ -10,6 +10,7 @@ export interface AuthenticatedUser {
   twitch_id: string;
   display_name: string;
   premium_flag: boolean;
+  admin_flag: boolean;
   stripe_customer_id: string | null;
   profile_image_url: string | null;
   created_at: string;
@@ -145,6 +146,43 @@ export async function requirePremium(request: NextRequest): Promise<{ user: Auth
           error: 'Premium subscription required',
           code: 'PREMIUM_REQUIRED',
           upgradeUrl: '/dashboard/subscription/upgrade'
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      )
+    };
+  }
+  
+  return { user };
+}
+
+/**
+ * Verify that a user has admin status
+ * This function performs server-side verification of admin status
+ */
+export function verifyAdminStatus(user: AuthenticatedUser | null): boolean {
+  if (!user) return false;
+  return user.admin_flag === true;
+}
+
+/**
+ * Middleware to require admin status
+ * Returns 403 if user is not admin
+ */
+export async function requireAdmin(request: NextRequest): Promise<{ user: AuthenticatedUser; error?: never } | { user?: never; error: Response }> {
+  const authResult = await requireAuth(request);
+  
+  if ('error' in authResult) {
+    return authResult;
+  }
+  
+  const { user } = authResult;
+  
+  if (!verifyAdminStatus(user)) {
+    return {
+      error: new Response(
+        JSON.stringify({ 
+          error: 'Admin access required',
+          code: 'ADMIN_REQUIRED'
         }),
         { status: 403, headers: { 'Content-Type': 'application/json' } }
       )

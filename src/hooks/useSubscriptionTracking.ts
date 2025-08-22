@@ -8,6 +8,13 @@
 import { useCallback } from 'react';
 import analytics, { EventCategory, SubscriptionEvents } from '@/lib/analytics';
 import { useAuth } from '@/components/auth/AuthProvider';
+import {
+  trackPlanView,
+  trackCheckoutStart,
+  trackCheckoutComplete,
+  trackSubscriptionCancelled,
+  trackPaymentFailed
+} from '@/lib/subscription-analytics';
 
 export function useSubscriptionTracking() {
   const { user, isAuthenticated } = useAuth();
@@ -17,7 +24,8 @@ export function useSubscriptionTracking() {
    * 
    * @param properties Additional properties to include with the event
    */
-  const trackViewPlans = useCallback((properties?: Record<string, any>) => {
+  const trackViewPlans = useCallback(async (properties?: Record<string, any>) => {
+    // Track in analytics system
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.VIEW_PLANS, {
       userId: user?.id,
       username: user?.display_name,
@@ -26,6 +34,24 @@ export function useSubscriptionTracking() {
       timestamp: new Date().toISOString(),
       ...properties
     });
+    
+    // Save to database for admin analytics
+    if (typeof window !== 'undefined') {
+      try {
+        await trackPlanView(
+          user?.id,
+          sessionStorage.getItem('session_id') || undefined,
+          document.referrer || undefined,
+          {
+            username: user?.display_name,
+            isPremium: user?.premium_flag || false,
+            ...properties
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save plan view event:', error);
+      }
+    }
   }, [user, isAuthenticated]);
   
   /**
@@ -36,12 +62,13 @@ export function useSubscriptionTracking() {
    * @param price The price of the plan
    * @param properties Additional properties to include with the event
    */
-  const trackStartCheckout = useCallback((
+  const trackStartCheckout = useCallback(async (
     planId: string,
     planName: string,
     price: number,
     properties?: Record<string, any>
   ) => {
+    // Track in analytics system
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.START_CHECKOUT, {
       planId,
       planName,
@@ -53,6 +80,26 @@ export function useSubscriptionTracking() {
       timestamp: new Date().toISOString(),
       ...properties
     });
+    
+    // Save to database for admin analytics
+    if (user?.id && typeof window !== 'undefined') {
+      try {
+        await trackCheckoutStart(
+          user.id,
+          planId,
+          planName,
+          sessionStorage.getItem('session_id') || undefined,
+          {
+            price,
+            username: user.display_name,
+            isPremium: user.premium_flag || false,
+            ...properties
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save checkout start event:', error);
+      }
+    }
   }, [user, isAuthenticated]);
   
   /**
@@ -63,12 +110,13 @@ export function useSubscriptionTracking() {
    * @param price The price of the plan
    * @param properties Additional properties to include with the event
    */
-  const trackCompleteCheckout = useCallback((
+  const trackCompleteCheckout = useCallback(async (
     planId: string,
     planName: string,
     price: number,
     properties?: Record<string, any>
   ) => {
+    // Track in analytics system
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.COMPLETE_CHECKOUT, {
       planId,
       planName,
@@ -80,6 +128,25 @@ export function useSubscriptionTracking() {
       timestamp: new Date().toISOString(),
       ...properties
     });
+    
+    // Save to database for admin analytics
+    if (user?.id && typeof window !== 'undefined') {
+      try {
+        await trackCheckoutComplete(
+          user.id,
+          planId,
+          planName,
+          sessionStorage.getItem('session_id') || undefined,
+          {
+            price,
+            username: user.display_name,
+            ...properties
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save checkout complete event:', error);
+      }
+    }
   }, [user, isAuthenticated]);
   
   /**
@@ -88,10 +155,11 @@ export function useSubscriptionTracking() {
    * @param reason The reason for cancellation (if provided)
    * @param properties Additional properties to include with the event
    */
-  const trackCancelSubscription = useCallback((
+  const trackCancelSubscription = useCallback(async (
     reason?: string,
     properties?: Record<string, any>
   ) => {
+    // Track in analytics system
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.CANCEL_SUBSCRIPTION, {
       reason,
       userId: user?.id,
@@ -101,6 +169,24 @@ export function useSubscriptionTracking() {
       timestamp: new Date().toISOString(),
       ...properties
     });
+    
+    // Save to database for admin analytics
+    if (user?.id) {
+      try {
+        await trackSubscriptionCancelled(
+          user.id,
+          properties?.planId,
+          properties?.planName,
+          {
+            reason,
+            username: user.display_name,
+            ...properties
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save subscription cancellation event:', error);
+      }
+    }
   }, [user, isAuthenticated]);
   
   /**
@@ -134,11 +220,12 @@ export function useSubscriptionTracking() {
    * @param errorMessage The error message
    * @param properties Additional properties to include with the event
    */
-  const trackPaymentError = useCallback((
+  const trackPaymentError = useCallback(async (
     errorCode: string,
     errorMessage: string,
     properties?: Record<string, any>
   ) => {
+    // Track in analytics system
     analytics.trackEvent(EventCategory.SUBSCRIPTION, SubscriptionEvents.PAYMENT_ERROR, {
       errorCode,
       errorMessage,
@@ -149,6 +236,25 @@ export function useSubscriptionTracking() {
       timestamp: new Date().toISOString(),
       ...properties
     });
+    
+    // Save to database for admin analytics
+    if (user?.id) {
+      try {
+        await trackPaymentFailed(
+          user.id,
+          errorCode,
+          errorMessage,
+          properties?.planId,
+          properties?.planName,
+          {
+            username: user.display_name,
+            ...properties
+          }
+        );
+      } catch (error) {
+        console.error('Failed to save payment error event:', error);
+      }
+    }
   }, [user, isAuthenticated]);
   
   return {
